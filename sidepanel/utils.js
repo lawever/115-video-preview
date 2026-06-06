@@ -18,29 +18,37 @@
     }
     return `${m}:${String(s).padStart(2, '0')}`;
   }
-  // count = floor(usable / interval)，点位置 start + i*step
-  function computePlan(duration, interval, skipIntro, skipOutro) {
+
+  // count-based: 用户指定想生成 N 张图，函数算出 interval 和 times
+  // 语义：interval = floor(active / count)，点位置 start + i*interval（i 从 0 到 count-1）
+  // 例：2h 视频，count=12，skip=0/0 → interval=600s，点 0:00, 10:00, ..., 1:50:00
+  function computePlanByCount(duration, count, skipIntro, skipOutro) {
     const start = Math.max(0, skipIntro);
     const end = Math.max(start, duration - Math.max(0, skipOutro));
-    const step = interval;
-    if (step <= 0 || end <= start) {
-      return { count: 0, times: [] };
+    const active = end - start;
+    if (count <= 0 || active <= 0) {
+      return { count: 0, times: [], interval: 0 };
     }
-    const usable = end - start;
-    const count = Math.floor(usable / step);
-    if (count <= 0) return { count: 0, times: [] };
+    // 实际能放下的点数：active 秒最多 active 张（每张 1 秒间隔）
+    const actualCount = Math.min(count, active);
+    const interval = Math.floor(active / actualCount);
+    if (interval <= 0) {
+      return { count: 0, times: [], interval: 0 };
+    }
     const times = [];
-    for (let i = 0; i < count; i++) {
-      times.push(start + i * step);
+    for (let i = 0; i < actualCount; i++) {
+      times.push(start + i * interval);
     }
-    return { count, times };
+    return { count: actualCount, times, interval };
   }
-  function validateInputs(interval, skipIntro, skipOutro, duration) {
+
+  // 校验用户输入
+  function validateInputs(count, skipIntro, skipOutro, duration) {
     if (!Number.isFinite(duration) || duration <= 0) {
       return { ok: false, message: '视频时长无效' };
     }
-    if (!Number.isFinite(interval) || interval <= 0) {
-      return { ok: false, message: '间隔必须大于 0 分钟' };
+    if (!Number.isFinite(count) || count <= 0) {
+      return { ok: false, message: '生成数量必须大于 0' };
     }
     if (!Number.isFinite(skipIntro) || skipIntro < 0) {
       return { ok: false, message: '跳过片头不能为负' };
@@ -53,5 +61,6 @@
     }
     return { ok: true, message: '' };
   }
-  return { formatTime, computePlan, validateInputs };
+
+  return { formatTime, computePlanByCount, validateInputs };
 }));

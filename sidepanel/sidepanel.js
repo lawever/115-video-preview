@@ -4,21 +4,24 @@
 (() => {
   'use strict';
 
-  const { formatTime, computePlan, validateInputs } = window.VP;
+  const { formatTime, computePlanByCount, validateInputs } = window.VP;
   const STORAGE_KEY = 'vp.settings';
 
   // ===== DOM =====
-  const $status     = document.getElementById('vp-status');
-  const $interval   = document.getElementById('vp-interval');
-  const $skipIntro  = document.getElementById('vp-skip-intro');
-  const $skipOutro  = document.getElementById('vp-skip-outro');
-  const $hint       = document.getElementById('vp-hint');
-  const $generate   = document.getElementById('vp-generate');
-  const $progress   = document.getElementById('vp-progress');
+  const $status       = document.getElementById('vp-status');
+  const $count        = document.getElementById('vp-count');
+  const $skipIntro    = document.getElementById('vp-skip-intro');
+  const $skipOutro    = document.getElementById('vp-skip-outro');
+  const $hint         = document.getElementById('vp-hint');
+  const $generate     = document.getElementById('vp-generate');
+  const $progress     = document.getElementById('vp-progress');
   const $progressFill = document.getElementById('vp-progress-fill');
   const $progressText = document.getElementById('vp-progress-text');
-  const $cancel     = document.getElementById('vp-cancel');
-  const $grid       = document.getElementById('vp-grid');
+  const $cancel       = document.getElementById('vp-cancel');
+  const $grid         = document.getElementById('vp-grid');
+  const $lightbox     = document.getElementById('vp-lightbox');
+  const $lightboxImg  = document.getElementById('vp-lightbox-img');
+  const $lightboxTime = document.getElementById('vp-lightbox-time');
 
   // ===== 状态 =====
   const state = {
@@ -26,7 +29,7 @@
     duration: 0,
     videoCount: 0,
     busy: false,
-    settings: { interval: 10, skipIntro: 0, skipOutro: 0 }
+    settings: { count: 12, skipIntro: 0, skipOutro: 0 }
   };
 
   // ===== 持久化 =====
@@ -35,7 +38,8 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return;
       const obj = JSON.parse(raw);
-      if (Number.isFinite(obj.interval)) state.settings.interval = obj.interval;
+      // 只接受新 schema（count + skipIntro + skipOutro），旧 interval 字段被忽略
+      if (Number.isFinite(obj.count)) state.settings.count = obj.count;
       if (Number.isFinite(obj.skipIntro)) state.settings.skipIntro = obj.skipIntro;
       if (Number.isFinite(obj.skipOutro)) state.settings.skipOutro = obj.skipOutro;
     } catch (_) { /* ignore */ }
@@ -44,12 +48,12 @@
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state.settings)); } catch (_) {}
   }
   function applySettingsToInputs() {
-    $interval.value  = state.settings.interval;
+    $count.value     = state.settings.count;
     $skipIntro.value = state.settings.skipIntro;
     $skipOutro.value = state.settings.skipOutro;
   }
   function readSettingsFromInputs() {
-    state.settings.interval  = parseFloat($interval.value)  || 0;
+    state.settings.count     = parseFloat($count.value)     || 0;
     state.settings.skipIntro = parseFloat($skipIntro.value) || 0;
     state.settings.skipOutro = parseFloat($skipOutro.value) || 0;
   }
@@ -57,29 +61,33 @@
   // ===== 校验 + 计划 =====
   function refreshValidate() {
     readSettingsFromInputs();
-    const { interval, skipIntro, skipOutro } = state.settings;
+    const { count, skipIntro, skipOutro } = state.settings;
     if (!state.hasVideo) {
-      const ok = interval > 0;
+      const ok = count > 0;
       $generate.disabled = !ok || state.busy;
       $hint.textContent = state.busy ? '正在生成…' : '请先打开 115 视频页的视频';
       $hint.dataset.state = '';
       return;
     }
-    const v = validateInputs(interval, skipIntro, skipOutro, state.duration);
+    const v = validateInputs(count, skipIntro, skipOutro, state.duration);
     if (!v.ok) {
       $generate.disabled = true;
       $hint.textContent = v.message;
       $hint.dataset.state = 'error';
       return;
     }
-    const intervalSec = interval * 60;
-    const skipIntroSec = skipIntro * 60;
-    const skipOutroSec = skipOutro * 60;
-    const plan = computePlan(state.duration, intervalSec, skipIntroSec, skipOutroSec);
+    const plan = computePlanByCount(state.duration, count, skipIntro * 60, skipOutro * 60);
     $generate.disabled = state.busy;
-    $hint.textContent = plan.count === 0
-      ? '当前参数下没有可生成的时间点'
-      : '预计生成 ' + plan.count + ' 张预览';
+    if (plan.count === 0) {
+      $hint.textContent = '当前参数下没有可生成的时间点';
+    } else if (plan.count < count) {
+      // 用户要的太多，实际只能放 plan.count 张
+      $hint.textContent = '预计生成 ' + plan.count + ' 张预览（每 ~' +
+        formatTime(plan.interval) + ' 一张，已按视频长度收紧）';
+    } else {
+      $hint.textContent = '预计生成 ' + plan.count + ' 张预览（每 ~' +
+        formatTime(plan.interval) + ' 一张）';
+    }
     $hint.dataset.state = '';
   }
 
@@ -107,13 +115,15 @@
   }
 
   // ===== 网格渲染 =====
-  // dataURL 是 base64 字符串，可直接作 img.src；不需要 createObjectURL/revoke
   function renderThumb(dataURL, time) {
     const wrap = document.createElement('div');
     wrap.className = 'vp-thumb';
     const img = document.createElement('img');
     img.src = dataURL;
     img.alt = formatTime(time);
+    img.title = '点击查看大图 · ' + formatTime(time);
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', () => openLightbox(dataURL, time));
     img.addEventListener('error', () => {
       wrap.replaceWith(addFailedThumb(time));
     }, { once: true });
@@ -139,6 +149,24 @@
     return wrap;
   }
 
+  // ===== Lightbox =====
+  function openLightbox(dataURL, time) {
+    $lightboxImg.src = dataURL;
+    $lightboxTime.textContent = formatTime(time);
+    $lightbox.hidden = false;
+  }
+  function closeLightbox() {
+    $lightbox.hidden = true;
+    $lightboxImg.src = '';
+  }
+  $lightbox.addEventListener('click', (e) => {
+    // 点 img 本身不关（让用户能拖动看大图），点 backdrop 才关
+    if (e.target === $lightbox) closeLightbox();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !$lightbox.hidden) closeLightbox();
+  });
+
   // ===== 工具 =====
   async function getActiveTab() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -146,7 +174,7 @@
   }
 
   // ===== 输入联动 =====
-  [$interval, $skipIntro, $skipOutro].forEach($el => {
+  [$count, $skipIntro, $skipOutro].forEach($el => {
     $el.addEventListener('input', () => {
       readSettingsFromInputs();
       saveSettings();
@@ -169,14 +197,11 @@
     if (state.busy || !state.hasVideo) return;
     readSettingsFromInputs();
     saveSettings();
-    const { interval, skipIntro, skipOutro } = state.settings;
-    const v = validateInputs(interval, skipIntro, skipOutro, state.duration);
+    const { count, skipIntro, skipOutro } = state.settings;
+    const v = validateInputs(count, skipIntro, skipOutro, state.duration);
     if (!v.ok) return;
 
-    const intervalSec = interval * 60;
-    const skipIntroSec = skipIntro * 60;
-    const skipOutroSec = skipOutro * 60;
-    const plan = computePlan(state.duration, intervalSec, skipIntroSec, skipOutroSec);
+    const plan = computePlanByCount(state.duration, count, skipIntro * 60, skipOutro * 60);
     if (plan.count === 0) return;
 
     clearGrid();
@@ -197,9 +222,6 @@
     try {
       const resp = await chrome.tabs.sendMessage(tab.id, {
         cmd: 'generate',
-        interval: intervalSec,
-        skipIntro: skipIntroSec,
-        skipOutro: skipOutroSec,
         times: plan.times
       });
       if (!resp || !resp.ok) {

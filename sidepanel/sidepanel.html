@@ -17,8 +17,8 @@
 
   <section class="vp-settings">
     <label class="vp-field">
-      <span>间隔（分钟）</span>
-      <input type="number" id="vp-interval" min="0.1" step="0.1" value="10">
+      <span>生成图片数</span>
+      <input type="number" id="vp-count" min="1" step="1" value="12">
     </label>
     <label class="vp-field">
       <span>跳过片头（分钟）</span>
@@ -43,6 +43,13 @@
   </section>
 
   <section class="vp-grid" id="vp-grid" aria-label="预览网格"></section>
+
+  <!-- 点击缩略图的全屏放大查看 -->
+  <div class="vp-lightbox" id="vp-lightbox" hidden role="dialog" aria-label="预览大图">
+    <img class="vp-lightbox-img" id="vp-lightbox-img" alt="">
+    <span class="vp-lightbox-time" id="vp-lightbox-time"></span>
+    <span class="vp-lightbox-hint">点击空白处或按 Esc 关闭</span>
+  </div>
 
   <script src="utils.js"></script>
   <script src="sidepanel.js"></script>

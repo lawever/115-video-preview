@@ -38,106 +38,119 @@ test('formatTime: NaN → "0:00"', () => {
   assert.equal(formatTime(NaN), '0:00');
 });
 
-const { computePlan } = require('./utils.js');
+const { computePlanByCount } = require('./utils.js');
 
-// 提醒：computePlan 全部参数以**秒**为单位
-// 语义：count = floor((active_range) / interval)，点位置 start + i*step
+// 参数全以**秒**为单位
 const MIN = 60;
 
-test('computePlan: 120 分钟视频，间隔 10 分钟，跳过 0/0 → 12 张', () => {
-  const r = computePlan(120 * MIN, 10 * MIN, 0, 0);
+test('computePlanByCount: 2h 视频 count=12 → 12 张, interval=600s', () => {
+  const r = computePlanByCount(120 * MIN, 12, 0, 0);
   assert.equal(r.count, 12);
+  assert.equal(r.interval, 600);
   assert.deepEqual(r.times, [0, 600, 1200, 1800, 2400, 3000, 3600, 4200, 4800, 5400, 6000, 6600]);
 });
 
-test('computePlan: 跳过片头 5 分钟 → 第一张从 300 开始, count=11', () => {
-  // active = 7200 - 300 = 6900, 6900/600 = 11.5, floor = 11
-  const r = computePlan(120 * MIN, 10 * MIN, 5 * MIN, 0);
-  assert.equal(r.count, 11);
+test('computePlanByCount: 2h 视频 count=12, skip 5/0 → 12 张, interval=floor(6900/12)=575', () => {
+  // 6900/12 = 575，floor=575
+  const r = computePlanByCount(120 * MIN, 12, 5 * MIN, 0);
+  assert.equal(r.count, 12);
+  assert.equal(r.interval, 575);
   assert.equal(r.times[0], 300);
-  assert.equal(r.times[10], 6300);
 });
 
-test('computePlan: 跳过片尾 5 分钟 → active 115 min, floor=11, 末位 6000', () => {
-  const r = computePlan(120 * MIN, 10 * MIN, 0, 5 * MIN);
-  assert.equal(r.count, 11);
-  assert.equal(r.times[10], 6000);
+test('computePlanByCount: 2h 视频 count=12, skip 0/5 → 12 张, interval=575, 末位 300+11*575=6625', () => {
+  const r = computePlanByCount(120 * MIN, 12, 0, 5 * MIN);
+  assert.equal(r.count, 12);
+  assert.equal(r.interval, 575);
+  assert.equal(r.times[11], 0 + 11 * 575);
 });
 
-test('computePlan: 跳过片头 3 + 跳过片尾 7，间隔 10 分钟 → 110 分钟 / 10 = 11 张', () => {
-  // active = 7200 - 180 - 420 = 6600, 6600/600 = 11
-  const r = computePlan(120 * MIN, 10 * MIN, 3 * MIN, 7 * MIN);
-  assert.equal(r.count, 11);
+test('computePlanByCount: 2h 视频 count=12, skip 3/7 → 12 张, interval=floor(6600/12)=550', () => {
+  const r = computePlanByCount(120 * MIN, 12, 3 * MIN, 7 * MIN);
+  assert.equal(r.count, 12);
+  assert.equal(r.interval, 550);
   assert.equal(r.times[0], 180);
-  assert.equal(r.times[10], 6180);
 });
 
-test('computePlan: 间隔大于可用区间 → count = 0，times = []', () => {
-  // active = 100, 100/200 = 0.5, floor = 0
-  const r = computePlan(100, 200, 0, 0);
+test('computePlanByCount: count=0 → 空计划', () => {
+  const r = computePlanByCount(120 * MIN, 0, 0, 0);
   assert.equal(r.count, 0);
   assert.deepEqual(r.times, []);
 });
 
-test('computePlan: 恰好整除，最后一张等于 duration - skipOutro - interval', () => {
-  // active = 100, 100/10 = 10, 末位 90
-  const r = computePlan(100, 10, 0, 0);
+test('computePlanByCount: 100s 视频 count=10 → 10 张, interval=10', () => {
+  const r = computePlanByCount(100, 10, 0, 0);
   assert.equal(r.count, 10);
+  assert.equal(r.interval, 10);
   assert.equal(r.times[9], 90);
 });
 
-test('computePlan: 浮点时长同样正确（如 119.5 秒）', () => {
-  // active = 119.5, 119.5/10 = 11.95, floor = 11, 末位 100
-  const r = computePlan(119.5, 10, 0, 0);
-  assert.equal(r.count, 11);
-  assert.equal(r.times[10], 100);
+test('computePlanByCount: 100s 视频 count=200 → 实际只能放 100 张（active=100）', () => {
+  const r = computePlanByCount(100, 200, 0, 0);
+  assert.equal(r.count, 100);
+  assert.equal(r.interval, 1);
+  assert.equal(r.times[99], 99);
 });
+
+test('computePlanByCount: 30s 视频 count=12 → 实际 12 张, interval=floor(30/12)=2', () => {
+  const r = computePlanByCount(30, 12, 0, 0);
+  assert.equal(r.count, 12);
+  assert.equal(r.interval, 2);
+  assert.equal(r.times[0], 0);
+  assert.equal(r.times[11], 22);
+});
+
+test('computePlanByCount: skipIntro+skipOutro ≥ duration → 空计划', () => {
+  const r = computePlanByCount(100, 10, 60, 60);
+  assert.equal(r.count, 0);
+});
+
 const { validateInputs } = require('./utils.js');
 
 test('validateInputs: 合法输入 → ok=true', () => {
-  const r = validateInputs(10, 0, 0, 7200);
+  const r = validateInputs(12, 0, 0, 7200);
   assert.equal(r.ok, true);
   assert.equal(r.message, '');
 });
 
-test('validateInputs: interval = 0 → ok=false', () => {
+test('validateInputs: count=0 → ok=false', () => {
   const r = validateInputs(0, 0, 0, 7200);
   assert.equal(r.ok, false);
-  assert.match(r.message, /间隔/);
+  assert.match(r.message, /生成数量/);
 });
 
-test('validateInputs: interval 负数 → ok=false', () => {
+test('validateInputs: count 负数 → ok=false', () => {
   const r = validateInputs(-5, 0, 0, 7200);
   assert.equal(r.ok, false);
 });
 
 test('validateInputs: skipIntro 负数 → ok=false', () => {
-  const r = validateInputs(10, -1, 0, 7200);
+  const r = validateInputs(12, -1, 0, 7200);
   assert.equal(r.ok, false);
 });
 
 test('validateInputs: skipOutro 负数 → ok=false', () => {
-  const r = validateInputs(10, 0, -1, 7200);
+  const r = validateInputs(12, 0, -1, 7200);
   assert.equal(r.ok, false);
 });
 
 test('validateInputs: skipIntro + skipOutro ≥ duration → ok=false', () => {
-  const r = validateInputs(10, 60, 60, 120);
+  const r = validateInputs(12, 60, 60, 120);
   assert.equal(r.ok, false);
   assert.match(r.message, /跳过/);
 });
 
 test('validateInputs: skipIntro + skipOutro == duration → ok=false', () => {
-  const r = validateInputs(10, 60, 60, 120);
+  const r = validateInputs(12, 60, 60, 120);
   assert.equal(r.ok, false);
 });
 
-test('validateInputs: interval 非整数（如 10.5）也接受', () => {
-  const r = validateInputs(10.5, 0, 0, 7200);
+test('validateInputs: count 非整数（如 12.5）也接受', () => {
+  const r = validateInputs(12.5, 0, 0, 7200);
   assert.equal(r.ok, true);
 });
 
 test('validateInputs: duration 0 → ok=false', () => {
-  const r = validateInputs(10, 0, 0, 0);
+  const r = validateInputs(12, 0, 0, 0);
   assert.equal(r.ok, false);
 });
