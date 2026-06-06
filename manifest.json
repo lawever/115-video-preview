@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "115 视频预览",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "在 115 网盘视频页内嵌一个浮窗，按指定数量生成时间均匀分布的预览缩略图",
   "permissions": ["storage"],
   "host_permissions": [
