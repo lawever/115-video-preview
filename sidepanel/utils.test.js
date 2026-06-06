@@ -41,6 +41,7 @@ test('formatTime: NaN → "0:00"', () => {
 const { computePlan } = require('./utils.js');
 
 // 提醒：computePlan 全部参数以**秒**为单位
+// 语义：count = floor((active_range) / interval)，点位置 start + i*step
 const MIN = 60;
 
 test('computePlan: 120 分钟视频，间隔 10 分钟，跳过 0/0 → 12 张', () => {
@@ -49,37 +50,45 @@ test('computePlan: 120 分钟视频，间隔 10 分钟，跳过 0/0 → 12 张',
   assert.deepEqual(r.times, [0, 600, 1200, 1800, 2400, 3000, 3600, 4200, 4800, 5400, 6000, 6600]);
 });
 
-test('computePlan: 跳过片头 5 分钟 → 第一张从 300 开始', () => {
+test('computePlan: 跳过片头 5 分钟 → 第一张从 300 开始, count=11', () => {
+  // active = 7200 - 300 = 6900, 6900/600 = 11.5, floor = 11
   const r = computePlan(120 * MIN, 10 * MIN, 5 * MIN, 0);
   assert.equal(r.count, 11);
   assert.equal(r.times[0], 300);
+  assert.equal(r.times[10], 6300);
 });
 
-test('computePlan: 跳过片尾 5 分钟 → 最后一张 ≤ duration - 300', () => {
+test('computePlan: 跳过片尾 5 分钟 → active 115 min, floor=11, 末位 6000', () => {
   const r = computePlan(120 * MIN, 10 * MIN, 0, 5 * MIN);
-  assert.equal(r.count, 12);
-  assert.ok(r.times[r.times.length - 1] <= 120 * MIN - 5 * MIN);
+  assert.equal(r.count, 11);
+  assert.equal(r.times[10], 6000);
 });
 
 test('computePlan: 跳过片头 3 + 跳过片尾 7，间隔 10 分钟 → 110 分钟 / 10 = 11 张', () => {
+  // active = 7200 - 180 - 420 = 6600, 6600/600 = 11
   const r = computePlan(120 * MIN, 10 * MIN, 3 * MIN, 7 * MIN);
   assert.equal(r.count, 11);
+  assert.equal(r.times[0], 180);
+  assert.equal(r.times[10], 6180);
 });
 
 test('computePlan: 间隔大于可用区间 → count = 0，times = []', () => {
+  // active = 100, 100/200 = 0.5, floor = 0
   const r = computePlan(100, 200, 0, 0);
   assert.equal(r.count, 0);
   assert.deepEqual(r.times, []);
 });
 
-test('computePlan: 恰好整除，最后一张等于 duration - skipOutro', () => {
+test('computePlan: 恰好整除，最后一张等于 duration - skipOutro - interval', () => {
+  // active = 100, 100/10 = 10, 末位 90
   const r = computePlan(100, 10, 0, 0);
   assert.equal(r.count, 10);
   assert.equal(r.times[9], 90);
 });
 
 test('computePlan: 浮点时长同样正确（如 119.5 秒）', () => {
+  // active = 119.5, 119.5/10 = 11.95, floor = 11, 末位 100
   const r = computePlan(119.5, 10, 0, 0);
-  assert.equal(r.count, 12);
-  assert.equal(r.times[11], 110);
+  assert.equal(r.count, 11);
+  assert.equal(r.times[10], 100);
 });

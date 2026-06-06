@@ -18,18 +18,23 @@
     }
     return `${m}:${String(s).padStart(2, '0')}`;
   }
+  // count = floor(usable / interval)，点位置 start + i*step（i 从 0 到 count-1）
+  // 语义：active 范围内能放下多少个"完整 interval 间隔"的点，floor 避免最后一点紧贴视频末尾
   function computePlan(duration, interval, skipIntro, skipOutro) {
     const start = Math.max(0, skipIntro);
     const end = Math.max(start, duration - Math.max(0, skipOutro));
     const step = interval;
-    const times = [];
     if (step <= 0 || end <= start) {
-      return { count: 0, times };
+      return { count: 0, times: [] };
     }
-    for (let t = start; t <= end; t += step) {
-      times.push(t);
+    const usable = end - start;
+    const count = Math.floor(usable / step);
+    if (count <= 0) return { count: 0, times: [] };
+    const times = [];
+    for (let i = 0; i < count; i++) {
+      times.push(start + i * step);
     }
-    return { count: times.length, times };
+    return { count, times };
   }
   function validateInputs(interval, skipIntro, skipOutro, duration) { throw new Error('not implemented'); }
   return { formatTime, computePlan, validateInputs };
