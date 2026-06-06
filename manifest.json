@@ -1,12 +1,14 @@
 {
   "manifest_version": 3,
   "name": "115 视频预览",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "在 115 网盘视频页生成按时间均匀分布的预览缩略图",
   "permissions": ["sidePanel"],
   "host_permissions": [
     "*://*.115.com/*",
-    "*://*.115pan.com/*"
+    "*://*.115vod.com/*",
+    "*://*.115pan.com/*",
+    "*://*.anxia.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -18,9 +20,15 @@
     "default_path": "sidepanel/sidepanel.html"
   },
   "content_scripts": [{
-    "matches": ["*://*.115.com/*", "*://*.115pan.com/*"],
+    "matches": [
+      "*://*.115.com/*",
+      "*://*.115vod.com/*",
+      "*://*.115pan.com/*",
+      "*://*.anxia.com/*"
+    ],
     "js": ["content/content.js"],
-    "run_at": "document_idle"
+    "run_at": "document_idle",
+    "all_frames": true
   }],
   "icons": {
     "16": "icons/icon-16.png",
