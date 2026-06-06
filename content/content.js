@@ -161,12 +161,13 @@
 
       runCapture(video, msg.times, (p) => {
         try {
+          // 无论成败都先发 progress（更新进度数字+当前时间）
+          chrome.runtime.sendMessage({
+            cmd: 'progress', done: p.done, total: p.total, time: p.time, error: p.error || null
+          });
+          // 成功时再发 thumb（带图片）
           if (p.ok) {
             chrome.runtime.sendMessage({ cmd: 'thumb', time: p.time, blob: p.blob });
-          } else {
-            chrome.runtime.sendMessage({
-              cmd: 'progress', done: p.done, total: p.total, time: p.time, error: p.error
-            });
           }
         } catch (_) { /* Side Panel 关了 */ }
       }).then((result) => {
