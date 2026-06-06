@@ -150,7 +150,7 @@ Side Panel → Content Script：
 | cmd | payload | 说明 |
 |---|---|---|
 | `ping` | — | 健康检查 |
-| `generate` | `{interval, skipIntro, skipOutro}` | 开始生成 |
+| `generate` | `{interval, skipIntro, skipOutro, times}` | 开始生成（times 由 Side Panel 用 utils.computePlan 预算好传入，content script 不重复实现） |
 | `cancel` | — | 取消生成 |
 
 Content Script → Side Panel：
@@ -165,6 +165,9 @@ Content Script → Side Panel：
 | `cancelled` | — | 被取消 |
 | `aborted` | — | 视频页面被卸载 |
 | `error` | `{message}` | 入参错误等 |
+
+
+> **设计决策**：`times` 由 Side Panel 端用 `utils.computePlan` 算好后随 `generate` 一起传入。Content Script 不引入 `utils.js`（避免双份实现与构建复杂度）。Content Script 信任 Side Panel 的校验结果。
 
 `thumb` 消息直接传 `Blob`，由 `chrome.runtime` 序列化；Side Panel 用 `URL.createObjectURL` 渲染，`img.onload` 后 `revokeObjectURL`。
 
