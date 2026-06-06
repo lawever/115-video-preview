@@ -10,6 +10,18 @@
   const QUALITY = 0.85;
   const SEEK_TIMEOUT_MS = 5000;
 
+  // ===== Blob → dataURL 辅助 =====
+  // 因为 chrome.runtime.sendMessage 用 JSON 序列化消息，Blob 会被剥成空对象。
+  // 在发送前把 Blob 转成 base64 dataURL 字符串，sidepanel 直接当 img.src 用。
+  function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('FileReader 失败'));
+      reader.readAsDataURL(blob);
+    });
+  }
+
   // ===== 视频挑选 =====
   function pickMainVideo() {
     const list = Array.from(document.querySelectorAll('video'));
@@ -35,6 +47,42 @@
         hasVideo, duration, videoCount: count
       });
     } catch (_) { /* Side Panel 未开时静默 */ }
+    // 找到了 video 但 duration 还没就绪（MSE 加密流常见）
+    if (v && duration === 0) {
+      armDurationListeners(v);
+    }
+  }
+
+  // duration 一旦有值就重报一次
+  function armDurationListeners(v) {
+    if (v._vpArmed) return;
+    v._vpArmed = true;
+    const retry = () => {
+      v.removeEventListener('durationchange', retry);
+      v.removeEventListener('loadedmetadata', retry);
+      v.removeEventListener('canplay', retry);
+      v._vpArmed = false;
+      reportStatus();
+    };
+    v.addEventListener('durationchange', retry, { once: true });
+    v.addEventListener('loadedmetadata', retry, { once: true });
+    v.addEventListener('canplay', retry, { once: true });
+    // 兜底：老版播放器可能不发这些事件，每 2 秒轮询一次
+    if (!v._vpPoll) {
+      let ticks = 0;
+      const tick = () => {
+        ticks++;
+        if (!document.contains(v)) { v._vpPoll = null; return; }
+        if (Number.isFinite(v.duration) && v.duration > 0) {
+          v._vpPoll = null;
+          reportStatus();
+          return;
+        }
+        if (ticks >= 60) { v._vpPoll = null; return; }  // 最多 2 分钟
+        v._vpPoll = setTimeout(tick, 2000);
+      };
+      v._vpPoll = setTimeout(tick, 1000);
+    }
   }
 
   // ===== DOM 监听 =====
@@ -49,18 +97,6 @@
   mo.observe(document.documentElement, { childList: true, subtree: true });
   reportStatus();
   document.addEventListener('loadedmetadata', reportStatus, true);
-
-  // ===== Blob \u2192 dataURL \u8f85\u52a9 =====
-  // \u56e0\u4e3a chrome.runtime.sendMessage \u7528 JSON \u5e8f\u5217\u5316\u6d88\u606f\uff0cBlob \u4f1a\u88ab\u5265\u6210\u7a7a\u5bf9\u8c61\u3002
-  // \u5728\u53d1\u9001\u524d\u628a Blob \u8f6c\u6210 base64 dataURL \u5b57\u7b26\u4e32\uff0csidepanel \u76f4\u63a5\u5f53 img.src \u7528\u3002
-  function blobToDataURL(blob) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = () => reject(new Error('FileReader \u5931\u8d25'));
-      reader.readAsDataURL(blob);
-    });
-  }
 
   // ===== 单帧截图 =====
   function captureFrame(video) {
@@ -163,7 +199,7 @@
         sendResponse({ ok: false, error: 'duration-unknown' });
         return false;
       }
-      // interval/skipIntro/skipOutro 由 Side Panel 端校验并预算好 times，本端只消费 times
+      // times 由 Side Panel 用 utils.computePlanByCount 算好传入，content script 不重复计算
       if (!Array.isArray(msg.times)) {
         sendResponse({ ok: false, error: 'missing-times' });
         return false;
@@ -173,17 +209,16 @@
 
       runCapture(video, msg.times, async (p) => {
         try {
-          // \u65e0\u8bba\u6210\u8d25\u90fd\u5148\u53d1 progress\uff08\u66f4\u65b0\u8fdb\u5ea6\u6570\u5b57+\u5f53\u524d\u65f6\u95f4\uff09
+          // 无论成败都先发 progress（更新进度数字+当前时间）
           chrome.runtime.sendMessage({
             cmd: 'progress', done: p.done, total: p.total, time: p.time, error: p.error || null
           });
-          // \u6210\u529f\u65f6\u518d\u53d1 thumb\uff1a\u5148\u628a blob \u8f6c dataURL\uff08chrome.runtime.sendMessage \u662f JSON \u5e8f\u5217\u5316\uff0cblob \u4f1a\u4e22\uff09
+          // 成功时再发 thumb：先把 blob 转 dataURL
           if (p.ok) {
             const dataURL = await blobToDataURL(p.blob);
             chrome.runtime.sendMessage({ cmd: 'thumb', time: p.time, dataURL });
           }
-        } catch (_) { /* Side Panel \u5173\u4e86 */ }
-      }).then((result) => {
+        } catch (_) { /* Side Panel 关了 */ }
       }).then((result) => {
         try {
           if (result.cancelled) {
