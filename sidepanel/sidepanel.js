@@ -79,8 +79,16 @@
     $generate.disabled = state.busy;
     $hint.textContent = plan.count === 0
       ? '当前参数下没有可生成的时间点'
-      : `预计生成 ${plan.count} 张预览`;
+      : '预计生成 ' + plan.count + ' 张预览';
     $hint.dataset.state = '';
+  }
+
+  // ===== 进度更新（progress 与 thumb 共用） =====
+  function updateProgress(done, total, time) {
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+    $progressFill.style.width = pct + '%';
+    const timeLabel = (typeof time === 'number') ? ' · ' + formatTime(time) : '';
+    $progressText.textContent = done + ' / ' + total + timeLabel;
   }
 
   // ===== 状态机 =====
@@ -176,9 +184,9 @@
 
     clearGrid();
     setBusy(true);
-    setStatus(`正在生成 ${plan.count} 张预览…`, '');
+    setStatus('正在生成 ' + plan.count + ' 张预览…', '');
     $progressFill.style.width = '0%';
-    $progressText.textContent = `0 / ${plan.count}`;
+    $progressText.textContent = '0 / ' + plan.count;
 
     let tab;
     try {
@@ -216,23 +224,22 @@
       state.videoCount = msg.videoCount || 0;
       if (state.hasVideo) {
         const dur = formatTime(state.duration);
-        const extra = state.videoCount > 1 ? `（共 ${state.videoCount} 个 video，已选主播放器）` : '';
-        setStatus(`已检测到视频 · 时长 ${dur}${extra}`, 'ok');
+        const extra = state.videoCount > 1 ? '（共 ' + state.videoCount + ' 个 video，已选主播放器）' : '';
+        setStatus('已检测到视频 · 时长 ' + dur + extra, 'ok');
       } else {
         setStatus('未检测到视频，请先打开 115 视频页的视频', 'error');
       }
       refreshValidate();
+    } else if (msg.cmd === 'progress') {
+      updateProgress(msg.done, msg.total, msg.time);
     } else if (msg.cmd === 'thumb') {
       renderThumb(msg.blob, msg.time);
-    } else if (msg.cmd === 'progress') {
-      const pct = msg.total > 0 ? Math.round((msg.done / msg.total) * 100) : 0;
-      $progressFill.style.width = pct + '%';
-      $progressText.textContent = `${msg.done} / ${msg.total}`;
     } else if (msg.cmd === 'done') {
       setBusy(false);
       $progressFill.style.width = '100%';
-      const note = msg.failed > 0 ? `（${msg.failed} 张失败）` : '';
-      setStatus(`完成 · 成功 ${msg.success}${note}`, msg.failed > 0 ? 'error' : 'ok');
+      $progressText.textContent = msg.success + ' / ' + (msg.success + msg.failed);
+      const note = msg.failed > 0 ? '（' + msg.failed + ' 张失败）' : '';
+      setStatus('完成 · 成功 ' + msg.success + note, msg.failed > 0 ? 'error' : 'ok');
     } else if (msg.cmd === 'cancelled') {
       setBusy(false);
       setStatus('已取消', '');
@@ -250,7 +257,6 @@
   applySettingsToInputs();
   refreshValidate();
 
-  // 主动 ping 一次让 content script 立刻回报
   (async () => {
     try {
       const tab = await getActiveTab();
