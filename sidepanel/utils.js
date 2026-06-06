@@ -18,7 +18,19 @@
     }
     return `${m}:${String(s).padStart(2, '0')}`;
   }
-  function computePlan(duration, interval, skipIntro, skipOutro) { throw new Error('not implemented'); }
+  function computePlan(duration, interval, skipIntro, skipOutro) {
+    const start = Math.max(0, skipIntro);
+    const end = Math.max(start, duration - Math.max(0, skipOutro));
+    const step = interval;
+    const times = [];
+    if (step <= 0 || end <= start) {
+      return { count: 0, times };
+    }
+    for (let t = start; t <= end; t += step) {
+      times.push(t);
+    }
+    return { count: times.length, times };
+  }
   function validateInputs(interval, skipIntro, skipOutro, duration) { throw new Error('not implemented'); }
   return { formatTime, computePlan, validateInputs };
 }));
