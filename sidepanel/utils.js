@@ -18,8 +18,7 @@
     }
     return `${m}:${String(s).padStart(2, '0')}`;
   }
-  // count = floor(usable / interval)，点位置 start + i*step（i 从 0 到 count-1）
-  // 语义：active 范围内能放下多少个"完整 interval 间隔"的点，floor 避免最后一点紧贴视频末尾
+  // count = floor(usable / interval)，点位置 start + i*step
   function computePlan(duration, interval, skipIntro, skipOutro) {
     const start = Math.max(0, skipIntro);
     const end = Math.max(start, duration - Math.max(0, skipOutro));
@@ -36,6 +35,23 @@
     }
     return { count, times };
   }
-  function validateInputs(interval, skipIntro, skipOutro, duration) { throw new Error('not implemented'); }
+  function validateInputs(interval, skipIntro, skipOutro, duration) {
+    if (!Number.isFinite(duration) || duration <= 0) {
+      return { ok: false, message: '视频时长无效' };
+    }
+    if (!Number.isFinite(interval) || interval <= 0) {
+      return { ok: false, message: '间隔必须大于 0 分钟' };
+    }
+    if (!Number.isFinite(skipIntro) || skipIntro < 0) {
+      return { ok: false, message: '跳过片头不能为负' };
+    }
+    if (!Number.isFinite(skipOutro) || skipOutro < 0) {
+      return { ok: false, message: '跳过片尾不能为负' };
+    }
+    if (skipIntro + skipOutro >= duration) {
+      return { ok: false, message: '跳过时长超过视频总长' };
+    }
+    return { ok: true, message: '' };
+  }
   return { formatTime, computePlan, validateInputs };
 }));

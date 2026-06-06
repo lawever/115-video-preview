@@ -92,3 +92,52 @@ test('computePlan: 浮点时长同样正确（如 119.5 秒）', () => {
   assert.equal(r.count, 11);
   assert.equal(r.times[10], 100);
 });
+const { validateInputs } = require('./utils.js');
+
+test('validateInputs: 合法输入 → ok=true', () => {
+  const r = validateInputs(10, 0, 0, 7200);
+  assert.equal(r.ok, true);
+  assert.equal(r.message, '');
+});
+
+test('validateInputs: interval = 0 → ok=false', () => {
+  const r = validateInputs(0, 0, 0, 7200);
+  assert.equal(r.ok, false);
+  assert.match(r.message, /间隔/);
+});
+
+test('validateInputs: interval 负数 → ok=false', () => {
+  const r = validateInputs(-5, 0, 0, 7200);
+  assert.equal(r.ok, false);
+});
+
+test('validateInputs: skipIntro 负数 → ok=false', () => {
+  const r = validateInputs(10, -1, 0, 7200);
+  assert.equal(r.ok, false);
+});
+
+test('validateInputs: skipOutro 负数 → ok=false', () => {
+  const r = validateInputs(10, 0, -1, 7200);
+  assert.equal(r.ok, false);
+});
+
+test('validateInputs: skipIntro + skipOutro ≥ duration → ok=false', () => {
+  const r = validateInputs(10, 60, 60, 120);
+  assert.equal(r.ok, false);
+  assert.match(r.message, /跳过/);
+});
+
+test('validateInputs: skipIntro + skipOutro == duration → ok=false', () => {
+  const r = validateInputs(10, 60, 60, 120);
+  assert.equal(r.ok, false);
+});
+
+test('validateInputs: interval 非整数（如 10.5）也接受', () => {
+  const r = validateInputs(10.5, 0, 0, 7200);
+  assert.equal(r.ok, true);
+});
+
+test('validateInputs: duration 0 → ok=false', () => {
+  const r = validateInputs(10, 0, 0, 0);
+  assert.equal(r.ok, false);
+});
