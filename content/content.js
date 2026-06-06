@@ -50,6 +50,18 @@
   reportStatus();
   document.addEventListener('loadedmetadata', reportStatus, true);
 
+  // ===== Blob \u2192 dataURL \u8f85\u52a9 =====
+  // \u56e0\u4e3a chrome.runtime.sendMessage \u7528 JSON \u5e8f\u5217\u5316\u6d88\u606f\uff0cBlob \u4f1a\u88ab\u5265\u6210\u7a7a\u5bf9\u8c61\u3002
+  // \u5728\u53d1\u9001\u524d\u628a Blob \u8f6c\u6210 base64 dataURL \u5b57\u7b26\u4e32\uff0csidepanel \u76f4\u63a5\u5f53 img.src \u7528\u3002
+  function blobToDataURL(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('FileReader \u5931\u8d25'));
+      reader.readAsDataURL(blob);
+    });
+  }
+
   // ===== 单帧截图 =====
   function captureFrame(video) {
     return new Promise((resolve, reject) => {
@@ -159,17 +171,19 @@
       resetCancel();
       sendResponse({ ok: true, total: msg.times.length });
 
-      runCapture(video, msg.times, (p) => {
+      runCapture(video, msg.times, async (p) => {
         try {
-          // 无论成败都先发 progress（更新进度数字+当前时间）
+          // \u65e0\u8bba\u6210\u8d25\u90fd\u5148\u53d1 progress\uff08\u66f4\u65b0\u8fdb\u5ea6\u6570\u5b57+\u5f53\u524d\u65f6\u95f4\uff09
           chrome.runtime.sendMessage({
             cmd: 'progress', done: p.done, total: p.total, time: p.time, error: p.error || null
           });
-          // 成功时再发 thumb（带图片）
+          // \u6210\u529f\u65f6\u518d\u53d1 thumb\uff1a\u5148\u628a blob \u8f6c dataURL\uff08chrome.runtime.sendMessage \u662f JSON \u5e8f\u5217\u5316\uff0cblob \u4f1a\u4e22\uff09
           if (p.ok) {
-            chrome.runtime.sendMessage({ cmd: 'thumb', time: p.time, blob: p.blob });
+            const dataURL = await blobToDataURL(p.blob);
+            chrome.runtime.sendMessage({ cmd: 'thumb', time: p.time, dataURL });
           }
-        } catch (_) { /* Side Panel 关了 */ }
+        } catch (_) { /* Side Panel \u5173\u4e86 */ }
+      }).then((result) => {
       }).then((result) => {
         try {
           if (result.cancelled) {

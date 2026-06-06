@@ -83,7 +83,7 @@
     $hint.dataset.state = '';
   }
 
-  // ===== 进度更新（progress 与 thumb 共用） =====
+  // ===== 进度更新 =====
   function updateProgress(done, total, time) {
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
     $progressFill.style.width = pct + '%';
@@ -107,18 +107,15 @@
   }
 
   // ===== 网格渲染 =====
-  function renderThumb(blob, time) {
-    const url = URL.createObjectURL(blob);
+  // dataURL 是 base64 字符串，可直接作 img.src；不需要 createObjectURL/revoke
+  function renderThumb(dataURL, time) {
     const wrap = document.createElement('div');
     wrap.className = 'vp-thumb';
     const img = document.createElement('img');
-    img.src = url;
+    img.src = dataURL;
     img.alt = formatTime(time);
-    img.addEventListener('load', () => URL.revokeObjectURL(url), { once: true });
     img.addEventListener('error', () => {
-      URL.revokeObjectURL(url);
-      const failed = addFailedThumb(time);
-      wrap.replaceWith(failed);
+      wrap.replaceWith(addFailedThumb(time));
     }, { once: true });
     const cap = document.createElement('div');
     cap.className = 'vp-thumb-time';
@@ -233,7 +230,7 @@
     } else if (msg.cmd === 'progress') {
       updateProgress(msg.done, msg.total, msg.time);
     } else if (msg.cmd === 'thumb') {
-      renderThumb(msg.blob, msg.time);
+      renderThumb(msg.dataURL, msg.time);
     } else if (msg.cmd === 'done') {
       setBusy(false);
       $progressFill.style.width = '100%';
