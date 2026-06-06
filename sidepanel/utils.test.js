@@ -40,26 +40,29 @@ test('formatTime: NaN → "0:00"', () => {
 
 const { computePlan } = require('./utils.js');
 
-test('computePlan: 120 分钟视频，间隔 10，跳过 0/0 → 12 张', () => {
-  const r = computePlan(120 * 60, 10, 0, 0);
+// 提醒：computePlan 全部参数以**秒**为单位
+const MIN = 60;
+
+test('computePlan: 120 分钟视频，间隔 10 分钟，跳过 0/0 → 12 张', () => {
+  const r = computePlan(120 * MIN, 10 * MIN, 0, 0);
   assert.equal(r.count, 12);
   assert.deepEqual(r.times, [0, 600, 1200, 1800, 2400, 3000, 3600, 4200, 4800, 5400, 6000, 6600]);
 });
 
 test('computePlan: 跳过片头 5 分钟 → 第一张从 300 开始', () => {
-  const r = computePlan(120 * 60, 10, 5, 0);
+  const r = computePlan(120 * MIN, 10 * MIN, 5 * MIN, 0);
   assert.equal(r.count, 11);
   assert.equal(r.times[0], 300);
 });
 
 test('computePlan: 跳过片尾 5 分钟 → 最后一张 ≤ duration - 300', () => {
-  const r = computePlan(120 * 60, 10, 0, 5);
+  const r = computePlan(120 * MIN, 10 * MIN, 0, 5 * MIN);
   assert.equal(r.count, 12);
-  assert.ok(r.times[r.times.length - 1] <= 120 * 60 - 5 * 60);
+  assert.ok(r.times[r.times.length - 1] <= 120 * MIN - 5 * MIN);
 });
 
-test('computePlan: 跳过片头 3 + 跳过片尾 7，间隔 10 → 算 110 分钟 / 10 = 11 张', () => {
-  const r = computePlan(120 * 60, 10, 3, 7);
+test('computePlan: 跳过片头 3 + 跳过片尾 7，间隔 10 分钟 → 110 分钟 / 10 = 11 张', () => {
+  const r = computePlan(120 * MIN, 10 * MIN, 3 * MIN, 7 * MIN);
   assert.equal(r.count, 11);
 });
 
