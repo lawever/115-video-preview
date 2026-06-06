@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>115 视频预览</title>
+  <link rel="stylesheet" href="sidepanel.css">
+</head>
+<body>
+  <header class="vp-header">
+    <span class="vp-title">● 115 视频预览</span>
+    <span class="vp-version">v0.1.0</span>
+  </header>
+
+  <section class="vp-status" id="vp-status" data-state="loading">
+    状态：正在检测视频…
+  </section>
+
+  <section class="vp-settings">
+    <label class="vp-field">
+      <span>间隔（分钟）</span>
+      <input type="number" id="vp-interval" min="0.1" step="0.1" value="10">
+    </label>
+    <label class="vp-field">
+      <span>跳过片头（分钟）</span>
+      <input type="number" id="vp-skip-intro" min="0" step="0.1" value="0">
+    </label>
+    <label class="vp-field">
+      <span>跳过片尾（分钟）</span>
+      <input type="number" id="vp-skip-outro" min="0" step="0.1" value="0">
+    </label>
+
+    <p class="vp-hint" id="vp-hint">预计生成 0 张预览</p>
+
+    <button class="vp-btn-primary" id="vp-generate" disabled>开始生成预览</button>
+  </section>
+
+  <section class="vp-progress" id="vp-progress" hidden>
+    <div class="vp-progress-bar">
+      <div class="vp-progress-fill" id="vp-progress-fill"></div>
+    </div>
+    <span class="vp-progress-text" id="vp-progress-text">0 / 0</span>
+    <button class="vp-btn-secondary" id="vp-cancel">取消</button>
+  </section>
+
+  <section class="vp-grid" id="vp-grid" aria-label="预览网格"></section>
+
+  <script src="utils.js"></script>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
