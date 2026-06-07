@@ -125,7 +125,7 @@
     <span class="vp-title">● 115 视频预览</span>
     <span class="vp-version">v0.3.1</span>
     <span class="vp-spacer"></span>
-    <button class="vp-icon-btn" id="vp-collapse" title="折叠/展开" type="button">▾</button>
+    <button class="vp-icon-btn" id="vp-collapse" title="折叠/展开" type="button">−</button>
     <button class="vp-icon-btn" id="vp-close" title="关闭（工具栏图标再开）" type="button">×</button>
   </div>
   <div class="vp-body" id="vp-body">
@@ -145,7 +145,7 @@
     <div class="vp-grid" id="vp-grid"></div>
   </div>
 </div>
-<div class="vp-collapsed-fab" id="vp-collapsed-fab" hidden><img class="vp-collapsed-fab-icon" id="vp-collapsed-fab-icon" alt="" draggable="false"><button class="vp-collapsed-fab-close" id="vp-collapsed-fab-close" title="完全关闭（点工具栏图标再开）" type="button">×</button></div>
+
 <div class="vp-mini" id="vp-mini" hidden><button class="vp-mini-icon" id="vp-mini-icon" title="点击展开 115 视频预览" type="button">▶</button><button class="vp-mini-close" id="vp-mini-close" title="完全关闭（点工具栏图标再开）" type="button">×</button></div>
 `;
 
@@ -233,36 +233,7 @@
               border-radius .3s cubic-bezier(.4,0,.2,1),
               box-shadow .3s ease;
 }
-.vp-collapsed-fab {
-  position: fixed; right: 20px; top: 50%;
-  transform: translateY(-50%);
-  width: 48px; height: 48px;
-  z-index: 2;
-  user-select: none; pointer-events: auto;
-}
-.vp-collapsed-fab-icon {
-  display: block;
-  width: 48px; height: 48px;
-  border-radius: 50%;
-  background: #1f1f1f;
-  box-shadow: 0 4px 12px rgba(0,0,0,.3);
-  cursor: pointer;
-  object-fit: cover;
-  transition: transform .15s ease;
-}
-.vp-collapsed-fab-icon:hover { transform: scale(1.08); }
-.vp-collapsed-fab-close {
-  position: absolute; left: -4px; bottom: -4px;
-  width: 20px; height: 20px; border-radius: 50%;
-  background: #c62828; color: #fff; border: 2px solid #ffffff;
-  cursor: pointer; display: none;
-  font-size: 13px; line-height: 1;
-  align-items: center; justify-content: center;
-  box-shadow: 0 1px 4px rgba(0,0,0,.3);
-  padding: 0;
-}
-.vp-collapsed-fab:hover .vp-collapsed-fab-close { display: flex; }
-.vp-collapsed-fab-close:hover { background: #b71c1c; }
+
 .vp-header {
   display: flex; align-items: center; gap: 8px;
   padding: 8px 12px;
@@ -358,12 +329,8 @@
     const $collapse   = $('vp-collapse');
     const $close      = $('vp-close');
     const $mini       = $('vp-mini');
-    const $fab        = $('vp-collapsed-fab');
-    const $fabIcon    = $('vp-collapsed-fab-icon');
-    const $fabClose   = $('vp-collapsed-fab-close');
     const $miniIcon   = $('vp-mini-icon');
     const $miniClose  = $('vp-mini-close');
-    $fabIcon.src = chrome.runtime.getURL('icons/icon-128.png');
 
 
     // ============================================================
@@ -388,13 +355,11 @@
     }
     function applyCollapsed() {
       if (state.panelCollapsed) {
-        $panel.hidden = true;
-        $fab.hidden = false;
-        $collapse.textContent = '▴';
+        $body.hidden = true;
+        $collapse.textContent = '+';
       } else {
-        $panel.hidden = false;
-        $fab.hidden = true;
-        $collapse.textContent = '▾';
+        $body.hidden = false;
+        $collapse.textContent = '−';
       }
     }
     function togglePanel() {
@@ -714,20 +679,7 @@
       applyVisibility();
       savePanelState();
     });
-    $fabIcon.addEventListener('click', e => {
-      e.stopPropagation();
-      state.panelCollapsed = false;
-      applyCollapsed();
-      savePanelState();
-    });
-    $fabClose.addEventListener('click', e => {
-      e.stopPropagation();
-      state.miniHidden = true;
-      state.panelCollapsed = false;
-      applyCollapsed();
-      applyVisibility();
-      savePanelState();
-    });
+
     $miniIcon.addEventListener('click', e => {
       e.stopPropagation();
       togglePanel();
