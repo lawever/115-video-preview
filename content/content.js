@@ -83,12 +83,13 @@
       panelVisible: true,
       panelCollapsed: false,
       panelPosition: null,
+      miniHidden: false,
     };
 
     function loadStorage() {
       return new Promise(resolve => {
         chrome.storage.local.get([
-          'vp.settings', 'vp.panelVisible', 'vp.panelCollapsed', 'vp.panelPosition'
+          'vp.settings', 'vp.panelVisible', 'vp.panelCollapsed', 'vp.panelPosition', 'vp.miniHidden'
         ], items => {
           const s = items['vp.settings'];
           if (s) {
@@ -101,6 +102,7 @@
           if (items['vp.panelPosition'] && typeof items['vp.panelPosition'].left === 'number') {
             state.panelPosition = items['vp.panelPosition'];
           }
+          if (typeof items['vp.miniHidden'] === 'boolean') state.miniHidden = items['vp.miniHidden'];
           resolve();
         });
       });
@@ -111,6 +113,7 @@
         'vp.panelVisible': state.panelVisible,
         'vp.panelCollapsed': state.panelCollapsed,
         'vp.panelPosition': state.panelPosition,
+        'vp.miniHidden': state.miniHidden,
       });
     }
 
@@ -142,7 +145,7 @@
     <div class="vp-grid" id="vp-grid"></div>
   </div>
 </div>
-<div class="vp-mini" id="vp-mini" hidden>● 115 预览已收起 · 点此展开</div>
+<div class="vp-mini" id="vp-mini" hidden><button class="vp-mini-icon" id="vp-mini-icon" title="点击展开 115 视频预览" type="button">▶</button><button class="vp-mini-close" id="vp-mini-close" title="完全关闭（点工具栏图标再开）" type="button">×</button></div>
 `;
 
     const PANEL_CSS = `:host { all: initial; }
@@ -185,19 +188,34 @@
 @media (prefers-color-scheme: dark) {
   .vp-panel { background-color: #1e1e1e !important; color: #e8e8e8 !important; }
   .vp-body { background-color: #1e1e1e !important; }
-  .vp-mini { background-color: #1e1e1e !important; color: #e8e8e8 !important; }
 }
 .vp-mini {
-  position: fixed; top: 20px; right: 20px;
-  background-color: #ffffff; color: #1a1a1a;
-  border: 1px solid var(--vp-border); border-radius: 20px;
-  padding: 6px 14px; font-size: 12px; cursor: pointer;
-  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  position: fixed; bottom: 20px; right: 20px;
+  background: transparent; border: none; padding: 0;
+  font: inherit; user-select: none; pointer-events: auto;
   z-index: 2;
-  user-select: none; pointer-events: auto;
-  font: 12px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
 }
-.vp-mini:hover { background: var(--vp-input-bg); }
+.vp-mini-icon {
+  position: relative;
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg, #1976d2, #5e35b1);
+  color: #fff; border: none; cursor: pointer; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+  transition: transform .15s ease;
+}
+.vp-mini-icon:hover { transform: scale(1.08); }
+.vp-mini-close {
+  position: absolute; left: -6px; bottom: -2px;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #c62828; color: #fff; border: 2px solid #ffffff;
+  cursor: pointer; display: none; font-size: 13px; line-height: 1;
+  align-items: center; justify-content: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+  padding: 0;
+}
+.vp-mini:hover .vp-mini-close { display: flex; }
+.vp-mini-close:hover { background: #b71c1c; }
 .vp-panel {
   position: fixed; top: 20px; right: 20px;
   width: 380px; max-width: calc(100vw - 40px); max-height: 80vh;
@@ -302,6 +320,8 @@
     const $collapse   = $('vp-collapse');
     const $close      = $('vp-close');
     const $mini       = $('vp-mini');
+    const $miniIcon   = $('vp-mini-icon');
+    const $miniClose  = $('vp-mini-close');
 
 
     // ============================================================
@@ -319,6 +339,8 @@
       }
     }
     function applyVisibility() {
+      if (state.miniHidden) { host.style.display = 'none'; return; }
+      host.style.display = '';
       $panel.hidden = !state.panelVisible;
       $mini.hidden = state.panelVisible;
     }
@@ -332,6 +354,7 @@
       }
     }
     function togglePanel() {
+      state.miniHidden = false;
       state.panelVisible = !state.panelVisible;
       applyVisibility();
       savePanelState();
@@ -646,9 +669,15 @@
       applyVisibility();
       savePanelState();
     });
-    $mini.addEventListener('click', e => {
+    $miniIcon.addEventListener('click', e => {
       e.stopPropagation();
       togglePanel();
+    });
+    $miniClose.addEventListener('click', e => {
+      e.stopPropagation();
+      state.miniHidden = true;
+      applyVisibility();
+      savePanelState();
     });
 
     // ============================================================
