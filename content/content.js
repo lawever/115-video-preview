@@ -142,6 +142,7 @@
     <div class="vp-grid" id="vp-grid"></div>
   </div>
 </div>
+<div class="vp-mini" id="vp-mini" hidden>● 115 预览已收起 · 点此展开</div>
 <div class="vp-lightbox" id="vp-lightbox" hidden>
   <img class="vp-lightbox-img" id="vp-lightbox-img" alt="">
   <span class="vp-lightbox-time" id="vp-lightbox-time"></span>
@@ -185,6 +186,17 @@
     --vp-progress-track: #333333;
   }
 }
+.vp-mini {
+  position: fixed; top: 20px; right: 20px;
+  background: var(--vp-bg); color: var(--vp-fg);
+  border: 1px solid var(--vp-border); border-radius: 20px;
+  padding: 6px 14px; font-size: 12px; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  z-index: 2;
+  user-select: none; pointer-events: auto;
+  font: 12px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+}
+.vp-mini:hover { background: var(--vp-input-bg); }
 .vp-panel {
   position: fixed; top: 20px; right: 20px;
   width: 380px; max-width: calc(100vw - 40px); max-height: 80vh;
@@ -305,6 +317,7 @@
     const $grid       = $('vp-grid');
     const $collapse   = $('vp-collapse');
     const $close      = $('vp-close');
+    const $mini       = $('vp-mini');
     const $lightbox     = $('vp-lightbox');
     const $lightboxImg  = $('vp-lightbox-img');
     const $lightboxTime = $('vp-lightbox-time');
@@ -324,7 +337,8 @@
       }
     }
     function applyVisibility() {
-      host.style.display = state.panelVisible ? '' : 'none';
+      $panel.hidden = !state.panelVisible;
+      $mini.hidden = state.panelVisible;
     }
     function applyCollapsed() {
       if (state.panelCollapsed) {
@@ -641,6 +655,10 @@
       state.panelVisible = false;
       applyVisibility();
       savePanelState();
+    });
+    $mini.addEventListener('click', e => {
+      e.stopPropagation();
+      togglePanel();
     });
 
     // ============================================================
