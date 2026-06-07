@@ -11,7 +11,7 @@
 [![CSP 兼容](https://img.shields.io/badge/CSP--safe-%E9%9B%B6%20fetch%2Feval-success)](#)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](#)
 
-> 📷 *截图占位 — 把 `dist/115-video-preview.zip` 拖进 `chrome://extensions/`，打开任意 115 视频后截一张图放这里，欢迎 PR。*
+<img src="docs/screenshot.svg" width="900" alt="115 Thumbnailer 截图" />
 
 ---
 

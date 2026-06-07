@@ -11,7 +11,7 @@ Supports both the new player (`115.com/players/video/...`) and the legacy one (`
 [![CSP Safe](https://img.shields.io/badge/CSP--safe-no%20fetch%2Feval-success)](#)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](#)
 
-> 📷 *Screenshots coming soon — load `dist/115-video-preview.zip` into `chrome://extensions/`, open any 115 video, drop a screenshot here, and open a PR.*
+<img src="docs/screenshot.svg" width="900" alt="115 Thumbnailer screenshot" />
 
 ---
 

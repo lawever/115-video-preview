@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 820" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a0a0a"/>
+      <stop offset="1" stop-color="#1a1a1a"/>
+    </linearGradient>
+    <linearGradient id="thumb" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a3a3a"/>
+      <stop offset="1" stop-color="#1f1f1f"/>
+    </linearGradient>
+    <linearGradient id="track" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a3a3a"/>
+      <stop offset="1" stop-color="#2a2a2a"/>
+    </linearGradient>
+    <linearGradient id="btn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1976d2"/>
+      <stop offset="1" stop-color="#1565c0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Video player background mock -->
+  <rect width="1280" height="820" fill="url(#bg)"/>
+  <ellipse cx="400" cy="450" rx="500" ry="280" fill="#1c1c1c" opacity="0.5"/>
+  <ellipse cx="400" cy="450" rx="280" ry="160" fill="#252525" opacity="0.4"/>
+
+  <!-- Faint 115 video player chrome -->
+  <text x="40" y="44" font-size="14" fill="#666" font-weight="500">115 视频播放器 · 演示背景</text>
+  <rect x="0" y="760" width="1280" height="60" fill="#000" opacity="0.7"/>
+  <rect x="40" y="784" width="600" height="4" rx="2" fill="#444"/>
+  <rect x="40" y="784" width="180" height="4" rx="2" fill="#999"/>
+  <circle cx="220" cy="786" r="6" fill="#ddd"/>
+  <text x="40" y="810" font-size="13" fill="#ccc">▶</text>
+  <text x="65" y="810" font-size="13" fill="#ddd">0:42 / 2:13:43</text>
+  <text x="240" y="810" font-size="13" fill="#888">🔊 ⚙ 全屏 ⛶</text>
+
+  <!-- ============ Floating panel (Shadow DOM host) ============ -->
+  <g transform="translate(896, 0)">
+    <!-- shadow -->
+    <rect x="-4" y="6" width="392" height="820" rx="8" fill="#000" opacity="0.5"/>
+    <!-- panel body -->
+    <rect width="380" height="820" rx="6" fill="#1e1e1e"/>
+    <!-- header -->
+    <rect width="380" height="40" rx="6" fill="#1f1f1f"/>
+    <rect y="34" width="380" height="6" fill="#1f1f1f"/>
+    <circle cx="16" cy="20" r="4" fill="#4caf50"/>
+    <text x="28" y="25" font-size="13" fill="#e8e8e8" font-weight="600">115 视频预览</text>
+    <rect x="128" y="10" width="38" height="20" rx="3" fill="#2a2a2a"/>
+    <text x="147" y="24" font-size="11" fill="#888" text-anchor="middle">v0.3.1</text>
+    <!-- header buttons -->
+    <rect x="304" y="8" width="28" height="24" rx="4" fill="transparent"/>
+    <text x="318" y="26" font-size="18" fill="#ccc" text-anchor="middle" font-weight="500">−</text>
+    <rect x="340" y="8" width="28" height="24" rx="4" fill="transparent"/>
+    <text x="354" y="26" font-size="16" fill="#ccc" text-anchor="middle" font-weight="600">×</text>
+
+    <!-- body -->
+    <g transform="translate(12, 50)">
+      <!-- status -->
+      <text font-size="12" fill="#4caf50">✓ 已检测到视频，时长 2:13:43</text>
+
+      <!-- 3 sliders row -->
+      <g transform="translate(0, 26)">
+        <!-- 数量 -->
+        <text x="0" y="10" font-size="11" fill="#aaa">数量 <tspan fill="#fff" font-weight="600">10</tspan></text>
+        <rect x="0" y="16" width="110" height="4" rx="2" fill="url(#track)"/>
+        <rect x="0" y="16" width="2" height="4" rx="2" fill="#1976d2"/>
+        <circle cx="2" cy="18" r="6" fill="#1976d2"/>
+        <!-- 片头 -->
+        <text x="123" y="10" font-size="11" fill="#aaa">片头（分）<tspan fill="#fff" font-weight="600"> 0</tspan></text>
+        <rect x="123" y="16" width="110" height="4" rx="2" fill="url(#track)"/>
+        <rect x="123" y="16" width="2" height="4" rx="2" fill="#1976d2"/>
+        <circle cx="125" cy="18" r="6" fill="#1976d2"/>
+        <!-- 片尾 -->
+        <text x="246" y="10" font-size="11" fill="#aaa">片尾（分）<tspan fill="#fff" font-weight="600"> 0</tspan></text>
+        <rect x="246" y="16" width="110" height="4" rx="2" fill="url(#track)"/>
+        <rect x="246" y="16" width="2" height="4" rx="2" fill="#1976d2"/>
+        <circle cx="248" cy="18" r="6" fill="#1976d2"/>
+      </g>
+
+      <!-- hint -->
+      <text x="0" y="68" font-size="11" fill="#888">预计生成 10 张预览（每隔 ~13:22 生成 1 张）</text>
+
+      <!-- primary button -->
+      <rect x="0" y="78" width="356" height="32" rx="4" fill="url(#btn)"/>
+      <text x="178" y="98" font-size="13" fill="#fff" text-anchor="middle" font-weight="600">开始生成预览</text>
+
+      <!-- progress -->
+      <text x="0" y="124" font-size="11" fill="#666">进度 8/10</text>
+      <rect x="0" y="130" width="356" height="3" rx="1.5" fill="#2a2a2a"/>
+      <rect x="0" y="130" width="285" height="3" rx="1.5" fill="#1976d2"/>
+
+      <!-- grid label -->
+      <text x="0" y="156" font-size="10" fill="#666" letter-spacing="0.5">预览缩略图（点击跳转）</text>
+
+      <!-- thumb grid 2 cols x 5 rows -->
+      <g transform="translate(0, 164)">
+        <!-- row 1 -->
+        <g transform="translate(0, 0)">
+          <rect width="174" height="76" rx="4" fill="url(#thumb)"/>
+          <text x="87" y="48" font-size="20" fill="#888" text-anchor="middle" opacity="0.6">▶</text>
+          <text x="87" y="96" font-size="11" fill="#bbb" text-anchor="middle">0:00</text>
+        </g>
+        <g transform="translate(182, 0)">
+          <rect width="174" height="76" rx="4" fill="url(#thumb)"/>
+          <text x="87" y="48" font-size="20" fill="#888" text-anchor="middle" opacity="0.6">▶</text>
+          <text x="87" y="96" font-size="11" fill="#bbb" text-anchor="middle">13:22</text>
+        </g>
+        <!-- row 2 -->
+        <g transform="translate(0, 100)">
+          <rect width="174" height="76" rx="4" fill="url(#thumb)"/>
+          <text x="87" y="48" font-size="20" fill="#888" text-anchor="middle" opacity="0.6">▶</text>
+          <text x="87" y="96" font-size="11" fill="#bbb" text-anchor="middle">26:44</text>
+        </g>
+        <g transform="translate(182, 100)">
+          <rect width="174" height="76" rx="4" fill="url(#thumb)"/>
+          <text x="87" y="48" font-size="20" fill="#888" text-anchor="middle" opacity="0.6">▶</text>
+          <text x="87" y="96" font-size="11" fill="#bbb" text-anchor="middle">40:06</text>
+        </g>
+        <!-- row 3 -->
+        <g transform="translate(0, 200)">
+          <rect width="174" height="76" rx="4" fill="url(#thumb)"/>
+          <text x="87" y="48" font-size="20" fill="#888" text-anchor="middle" opacity="0.6">▶</text>
+          <text x="87" y="96" font-size="11" fill="#bbb" text-anchor="middle">53:28</text>
+        </g>
+        <g transform="translate(182, 200)">
+          <rect width="174" height="76" rx="4" fill="url(#thumb)"/>
+          <text x="87" y="48" font-size="20" fill="#888" text-anchor="middle" opacity="0.6">▶</text>
+          <text x="87" y="96" font-size="11" fill="#bbb" text-anchor="middle">1:06:50</text>
+        </g>
+        <!-- row 4 -->
+        <g transform="translate(0, 300)">
+          <rect width="174" height="76" rx="4" fill="url(#thumb)"/>
+          <text x="87" y="48" font-size="20" fill="#888" text-anchor="middle" opacity="0.6">▶</text>
+          <text x="87" y="96" font-size="11" fill="#bbb" text-anchor="middle">1:20:12</text>
+        </g>
+        <g transform="translate(182, 300)">
+          <rect width="174" height="76" rx="4" fill="url(#thumb)"/>
+          <text x="87" y="48" font-size="20" fill="#888" text-anchor="middle" opacity="0.6">▶</text>
+          <text x="87" y="96" font-size="11" fill="#bbb" text-anchor="middle">1:33:34</text>
+        </g>
+        <!-- row 5 (faded, still loading) -->
+        <g transform="translate(0, 400)" opacity="0.5">
+          <rect width="174" height="76" rx="4" fill="#2a2a2a"/>
+          <text x="87" y="48" font-size="14" fill="#666" text-anchor="middle">…加载中</text>
+        </g>
+        <g transform="translate(182, 400)" opacity="0.5">
+          <rect width="174" height="76" rx="4" fill="#2a2a2a"/>
+        </g>
+      </g>
+    </g>
+  </g>
+
+</svg>
