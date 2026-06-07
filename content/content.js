@@ -125,7 +125,7 @@
     <span class="vp-title">● 115 视频预览</span>
     <span class="vp-version">v0.3.1</span>
     <span class="vp-spacer"></span>
-    <button class="vp-icon-btn" id="vp-collapse" title="折叠/展开" type="button">−</button>
+    <button class="vp-icon-btn" id="vp-collapse" title="折叠/展开" type="button">▾</button>
     <button class="vp-icon-btn" id="vp-close" title="关闭（工具栏图标再开）" type="button">×</button>
   </div>
   <div class="vp-body" id="vp-body">
@@ -144,8 +144,8 @@
     </div>
     <div class="vp-grid" id="vp-grid"></div>
   </div>
-  <div class="vp-collapsed-fab" id="vp-collapsed-fab" hidden><img class="vp-collapsed-fab-icon" id="vp-collapsed-fab-icon" alt="" draggable="false"><button class="vp-collapsed-fab-close" id="vp-collapsed-fab-close" title="完全关闭（点工具栏图标再开）" type="button">×</button></div>
 </div>
+<div class="vp-collapsed-fab" id="vp-collapsed-fab" hidden><img class="vp-collapsed-fab-icon" id="vp-collapsed-fab-icon" alt="" draggable="false"><button class="vp-collapsed-fab-close" id="vp-collapsed-fab-close" title="完全关闭（点工具栏图标再开）" type="button">×</button></div>
 <div class="vp-mini" id="vp-mini" hidden><button class="vp-mini-icon" id="vp-mini-icon" title="点击展开 115 视频预览" type="button">▶</button><button class="vp-mini-close" id="vp-mini-close" title="完全关闭（点工具栏图标再开）" type="button">×</button></div>
 `;
 
@@ -390,11 +390,11 @@
       if (state.panelCollapsed) {
         $panel.hidden = true;
         $fab.hidden = false;
-        $collapse.textContent = '+';
+        $collapse.textContent = '▴';
       } else {
         $panel.hidden = false;
         $fab.hidden = true;
-        $collapse.textContent = '−';
+        $collapse.textContent = '▾';
       }
     }
     function togglePanel() {
