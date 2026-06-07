@@ -143,11 +143,7 @@
   </div>
 </div>
 <div class="vp-mini" id="vp-mini" hidden>● 115 预览已收起 · 点此展开</div>
-<div class="vp-lightbox" id="vp-lightbox" hidden>
-  <img class="vp-lightbox-img" id="vp-lightbox-img" alt="">
-  <span class="vp-lightbox-time" id="vp-lightbox-time"></span>
-  <span class="vp-lightbox-hint">点击空白处或按 Esc 关闭</span>
-</div>`;
+`;
 
     const PANEL_CSS = `:host { all: initial; }
 * { box-sizing: border-box; }
@@ -266,31 +262,13 @@
   background: var(--vp-thumb-failed-bg);
   border-radius: 4px; object-fit: cover;
 }
-.vp-thumb img { cursor: zoom-in; }
+.vp-thumb img { cursor: pointer; }
 .vp-thumb-failed {
   display: flex; align-items: center; justify-content: center;
   color: var(--vp-thumb-failed-fg); font-size: 11px;
 }
 .vp-thumb-time { font-size: 11px; color: var(--vp-muted); text-align: center; }
-.vp-lightbox {
-  position: fixed; inset: 0; z-index: 9999;
-  background: var(--vp-overlay);
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 24px; cursor: zoom-out; backdrop-filter: blur(2px); pointer-events: auto;
-}
-.vp-lightbox-img {
-  max-width: 100%; max-height: calc(100vh - 100px);
-  object-fit: contain; border-radius: 6px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.5); cursor: default;
-}
-.vp-lightbox-time {
-  margin-top: 14px; font-size: 18px; color: #fff; font-weight: 600;
-  text-shadow: 0 1px 4px rgba(0,0,0,.6); cursor: default;
-}
-.vp-lightbox-hint {
-  position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
-  font-size: 12px; color: rgba(255,255,255,.6); cursor: default; user-select: none;
-}`;
+`;
 
     const host = document.createElement('div');
     host.id = 'vp-host-root';
@@ -324,9 +302,7 @@
     const $collapse   = $('vp-collapse');
     const $close      = $('vp-close');
     const $mini       = $('vp-mini');
-    const $lightbox     = $('vp-lightbox');
-    const $lightboxImg  = $('vp-lightbox-img');
-    const $lightboxTime = $('vp-lightbox-time');
+
 
     // ============================================================
     // UI 行为
@@ -589,8 +565,14 @@
       const img = document.createElement('img');
       img.src = url;
       img.alt = formatTime(time);
-      img.title = '点击查看大图 · ' + formatTime(time);
-      img.addEventListener('click', e => { e.stopPropagation(); openLightbox(url, time); });
+      img.title = '点击跳到 ' + formatTime(time) + ' 播放';
+      img.addEventListener('click', e => {
+        e.stopPropagation();
+        const v = pickMainVideo();
+        if (!v) return;
+        try { v.currentTime = time; } catch (_) { /* ignore */ }
+        v.play().catch(() => { /* ignore */ });
+      });
       const cap = document.createElement('div');
       cap.className = 'vp-thumb-time';
       cap.textContent = formatTime(time);
@@ -613,18 +595,6 @@
     }
 
     // ============================================================
-    // Lightbox
-    // ============================================================
-    function openLightbox(url, time) {
-      $lightboxImg.src = url;
-      $lightboxTime.textContent = formatTime(time);
-      $lightbox.hidden = false;
-    }
-    function closeLightbox() {
-      $lightbox.hidden = true;
-      $lightboxImg.src = '';
-    }
-    $lightbox.addEventListener('click', e => { if (e.target === $lightbox) closeLightbox(); });
 
     // ============================================================
     // 拖拽
@@ -752,9 +722,7 @@
     });
     mo.observe(document.documentElement, { childList: true, subtree: true });
     document.addEventListener('loadedmetadata', reportStatus, true);
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && !$lightbox.hidden) closeLightbox();
-    });
+
     reportStatus();
 
     chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
