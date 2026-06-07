@@ -221,19 +221,12 @@
 .vp-resize-bl {
   position: absolute;
   left: 0; bottom: 0;
-  width: 16px; height: 16px;
+  width: 20px; height: 20px;
   cursor: sw-resize;
   z-index: 2;
   background: transparent;
 }
-.vp-resize-bl::after {
-  content: '';
-  position: absolute;
-  left: 3px; bottom: 3px;
-  width: 8px; height: 8px;
-  border-right: 2px solid rgba(0,0,0,.28);
-  border-bottom: 2px solid rgba(0,0,0,.28);
-}
+
 .vp-panel {
   position: fixed; top: 20px; right: 20px;
   width: 380px; max-width: calc(100vw - 40px); max-height: calc(100vh - 40px);
