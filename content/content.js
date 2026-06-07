@@ -68,7 +68,7 @@
     const THUMB_W = 320;
     const THUMB_H = 180;
     const QUALITY = 0.85;
-    const SEEK_TIMEOUT_MS = 5000;
+    const SEEK_TIMEOUT_MS = 15000;
 
     // ============================================================
     // 状态
@@ -396,9 +396,9 @@
       if (plan.count === 0) {
         $hint.textContent = '当前参数下没有可生成的时间点';
       } else if (plan.count < count) {
-        $hint.textContent = '预计生成 ' + plan.count + ' 张预览（每 ~' + formatTime(plan.interval) + ' 一张，已按视频长度收紧）';
+        $hint.textContent = '预计生成 ' + plan.count + ' 张预览（每隔 ~' + formatTime(plan.interval) + ' 生成 1 张，已按视频长度收紧）';
       } else {
-        $hint.textContent = '预计生成 ' + plan.count + ' 张预览（每 ~' + formatTime(plan.interval) + ' 一张）';
+        $hint.textContent = '预计生成 ' + plan.count + ' 张预览（每隔 ~' + formatTime(plan.interval) + ' 生成 1 张）';
       }
       $hint.dataset.state = '';
     }
@@ -504,7 +504,11 @@
         function onSeeked() {
           clearTimeout(timer);
           video.removeEventListener('seeked', onSeeked);
-          requestAnimationFrame(() => resolve());
+          if ('requestVideoFrameCallback' in video) {
+            video.requestVideoFrameCallback(() => resolve());
+          } else {
+            requestAnimationFrame(() => resolve());
+          }
         }
         video.addEventListener('seeked', onSeeked, { once: true });
         try { video.currentTime = t; }
@@ -543,20 +547,28 @@
           await waitIfHidden();
           if (state.cancelRequested) return { success, failed, cancelled: true };
           const t = times[i];
-          try {
-            await seekTo(video, t);
-            const blob = await captureFrame(video);
-            const url = URL.createObjectURL(blob);
-            renderThumb(url, t);
-            const probe = new Image();
-            probe.onload = () => URL.revokeObjectURL(url);
-            probe.src = url;
-            success++;
-            updateProgress(i + 1, total, t);
-          } catch (e) {
-            renderFailedThumb(t);
-            failed++;
-            updateProgress(i + 1, total, t);
+          let captured = false;
+          for (let attempt = 1; attempt <= 3 && !captured; attempt++) {
+            try {
+              await seekTo(video, t);
+              const blob = await captureFrame(video);
+              const url = URL.createObjectURL(blob);
+              renderThumb(url, t);
+              const probe = new Image();
+              probe.onload = () => URL.revokeObjectURL(url);
+              probe.src = url;
+              success++;
+              updateProgress(i + 1, total, t);
+              captured = true;
+            } catch (e) {
+              if (attempt < 3) {
+                await new Promise(r => setTimeout(r, 500));
+              } else {
+                renderFailedThumb(t);
+                failed++;
+                updateProgress(i + 1, total, t);
+              }
+            }
           }
         }
       } finally {
