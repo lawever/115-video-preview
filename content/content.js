@@ -198,8 +198,8 @@
 .vp-mini-icon {
   position: relative;
   width: 40px; height: 40px; border-radius: 50%;
-  background: linear-gradient(135deg, #1976d2, #5e35b1);
-  color: #fff; border: none; cursor: pointer; padding: 0;
+  background: #1f1f1f;
+  color: #e8e8e8; border: none; cursor: pointer; padding: 0;
   display: flex; align-items: center; justify-content: center;
   font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,.25);
   transition: transform .15s ease;
@@ -229,7 +229,8 @@
 .vp-header {
   display: flex; align-items: center; gap: 8px;
   padding: 8px 12px;
-  background: linear-gradient(135deg, #1976d2, #5e35b1); color: #fff;
+  background: #1f1f1f; color: #e8e8e8;
+  border-bottom: 1px solid #333;
   cursor: move; user-select: none; flex-shrink: 0;
 }
 .vp-title { font-weight: 600; font-size: 13px; }
