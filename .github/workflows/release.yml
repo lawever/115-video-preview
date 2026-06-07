@@ -14,6 +14,8 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     permissions:
       contents: write
     steps:
@@ -57,3 +59,4 @@ jobs:
           files: |
             dist/115-video-preview.zip
           fail_on_unmatched_files: true
+
