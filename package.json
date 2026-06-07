@@ -1,6 +1,6 @@
 {
   "name": "115-video-preview",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "private": true,
   "description": "115 视频预览 Chrome 扩展（MV3）",
   "scripts": {

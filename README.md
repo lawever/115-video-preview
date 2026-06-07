@@ -7,7 +7,7 @@ A Chrome / 115-browser MV3 extension that injects a floating panel into 115 vide
 Supports both the new player (`115.com/players/video/...`) and the legacy one (`115vod.com/?pickcode=...`).
 
 [![Chrome MV3](https://img.shields.io/badge/manifest-v3-4285F4?logo=googlechrome&logoColor=white)](#)
-[![Version](https://img.shields.io/badge/version-0.3.1-blue)](#)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue)](#)
 [![CSP Safe](https://img.shields.io/badge/CSP--safe-no%20fetch%2Feval-success)](#)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](#)
 

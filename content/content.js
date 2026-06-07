@@ -125,7 +125,7 @@
     const PANEL_HTML = `<div class="vp-panel" id="vp-panel">
   <div class="vp-header" id="vp-header">
     <span class="vp-title">● 115 视频预览</span>
-    <span class="vp-version">v0.3.1</span>
+    <span class="vp-version">v0.4.0</span>
     <span class="vp-spacer"></span>
     <button class="vp-icon-btn" id="vp-collapse" title="折叠/展开" type="button">−</button>
     <button class="vp-icon-btn" id="vp-close" title="关闭（工具栏图标再开）" type="button">×</button>

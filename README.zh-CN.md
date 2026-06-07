@@ -7,7 +7,7 @@
 同时支持新版播放器（`115.com/players/video/...`）和老版播放器（`115vod.com/?pickcode=...`）。
 
 [![Chrome MV3](https://img.shields.io/badge/manifest-v3-4285F4?logo=googlechrome&logoColor=white)](#)
-[![Version](https://img.shields.io/badge/version-0.3.1-blue)](#)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue)](#)
 [![CSP 兼容](https://img.shields.io/badge/CSP--safe-%E9%9B%B6%20fetch%2Feval-success)](#)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](#)
 
