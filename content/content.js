@@ -68,7 +68,7 @@
     const THUMB_W = 320;
     const THUMB_H = 180;
     const QUALITY = 0.85;
-    const SEEK_TIMEOUT_MS = 15000;
+    const SEEK_TIMEOUT_MS = 30000;
 
     // ============================================================
     // 状态
@@ -79,11 +79,13 @@
       videoCount: 0,
       busy: false,
       cancelRequested: false,
+      capturing: false,
       settings: { count: 10, skipIntro: 0, skipOutro: 0 },
       panelVisible: true,
       panelCollapsed: false,
       panelPosition: null,
       miniHidden: false,
+      shouldShow: false,
     };
 
     function loadStorage() {
@@ -399,7 +401,7 @@
       }
     }
     function applyVisibility() {
-      if (state.miniHidden) { host.style.display = 'none'; return; }
+      if (state.miniHidden || !state.shouldShow) { host.style.display = 'none'; return; }
       host.style.display = '';
       $panel.hidden = !state.panelVisible;
       $mini.hidden = state.panelVisible;
@@ -418,6 +420,7 @@
       }
     }
     function togglePanel() {
+      if (!state.shouldShow) return;
       state.miniHidden = false;
       state.panelVisible = !state.panelVisible;
       applyVisibility();
@@ -517,6 +520,12 @@
       state.duration = (v && Number.isFinite(v.duration)) ? v.duration : 0;
       updateSliderMax();
       state.videoCount = document.querySelectorAll('video').length;
+      // Freeze shouldShow during capture: the 115 player briefly swaps
+      // the <video> element during seeks, which would otherwise make
+      // the panel flash on/off as reportStatus() flips shouldShow.
+      if (!state.capturing) {
+        state.shouldShow = state.hasVideo && state.duration > 0;
+      }
       if (state.hasVideo) {
         const dur = formatTime(state.duration);
         const extra = state.videoCount > 1 ? '（共 ' + state.videoCount + ' 个 video，已选主播放器）' : '';
@@ -525,6 +534,7 @@
         setStatus('未检测到视频，请先打开 115 视频页的视频', 'error');
       }
       refreshValidate();
+      applyVisibility();
       if (v && state.duration === 0) armDurationListeners(v);
     }
     function armDurationListeners(v) {
@@ -576,29 +586,75 @@
     }
     function seekTo(video, t) {
       return new Promise((resolve, reject) => {
-        const timer = setTimeout(() => {
+        // Same-position shortcut: browser won't fire 'seeked' for a no-op.
+        if (Math.abs(video.currentTime - t) < 0.05 && video.readyState >= 2) {
+          waitForRightFrame(video, t, null, () => resolve(), 5);
+          return;
+        }
+
+        // Epoch token: stale 'seeked' from a previous seekTo can still
+        // fire on this listener and resolve us prematurely.
+        const epoch = (video._vpSeekEpoch = (video._vpSeekEpoch || 0) + 1);
+        let settled = false;
+        let backstop = null;
+        let timer = null;
+
+        const finish = () => {
+          if (settled || epoch !== video._vpSeekEpoch) return;
+          settled = true;
+          if (backstop) clearTimeout(backstop);
+          if (timer) clearTimeout(timer);
           video.removeEventListener('seeked', onSeeked);
-          reject(new Error('seeked 超时（' + SEEK_TIMEOUT_MS + 'ms）'));
-        }, SEEK_TIMEOUT_MS);
+          resolve();
+        };
+        const fail = (msg) => {
+          if (settled) return;
+          settled = true;
+          if (backstop) clearTimeout(backstop);
+          if (timer) clearTimeout(timer);
+          video.removeEventListener('seeked', onSeeked);
+          reject(new Error(msg));
+        };
         function onSeeked() {
-          clearTimeout(timer);
-          video.removeEventListener('seeked', onSeeked);
-          let done = false;
-          const finish = () => { if (!done) { done = true; resolve(); } };
-          if ('requestVideoFrameCallback' in video) {
-            try { video.requestVideoFrameCallback(finish); } catch (_) { /* ignore */ }
-          }
-          requestAnimationFrame(finish);
-          setTimeout(finish, 500);
+          if (epoch !== video._vpSeekEpoch) return; // stale
+          waitForRightFrame(video, t, epoch, () => finish(), 5);
+          backstop = setTimeout(() => finish(), 800);
         }
         video.addEventListener('seeked', onSeeked, { once: true });
-        try { video.currentTime = t; }
-        catch (e) {
-          clearTimeout(timer);
-          video.removeEventListener('seeked', onSeeked);
-          reject(e);
-        }
+        timer = setTimeout(() => fail('seeked 超时（' + SEEK_TIMEOUT_MS + 'ms）'), SEEK_TIMEOUT_MS);
+        try {
+          // fastSeek (Chrome) snaps to the nearest keyframe — much faster
+          // for far jumps. Fall back to currentTime for older browsers.
+          if (typeof video.fastSeek === 'function') {
+            video.fastSeek(t);
+          } else {
+            video.currentTime = t;
+          }
+        } catch (e) { fail(e.message || String(e)); }
       });
+    }
+
+    // Wait for a presented frame whose mediaTime is close to t. Re-arms
+    // rVFC up to `attempts` times (~16ms each) to skip past stale frames
+    // (e.g. the pre-seek frame still painted on the element). 2x rAF
+    // fallback if rVFC is missing. epoch=null disables epoch check (used
+    // by the no-op shortcut).
+    function waitForRightFrame(video, t, epoch, done, attempts) {
+      if (epoch !== null && epoch !== video._vpSeekEpoch) return done();
+      if (attempts <= 0) return done();
+      if ('requestVideoFrameCallback' in video) {
+        try {
+          video.requestVideoFrameCallback((_now, metadata) => {
+            if (!metadata || Math.abs(metadata.mediaTime - t) < 0.5) {
+              done();
+            } else {
+              waitForRightFrame(video, t, epoch, done, attempts - 1);
+            }
+          });
+          return;
+        } catch (_) { /* fall through */ }
+      }
+      requestAnimationFrame(() => requestAnimationFrame(() => done()));
     }
     function waitIfHidden() {
       if (document.visibilityState !== 'hidden') return Promise.resolve();
@@ -616,20 +672,49 @@
         document.addEventListener('visibilitychange', onVis);
       });
     }
-    async function runCapture(video, times) {
+    async function runCapture(initialVideo, times) {
       const total = times.length;
       let success = 0, failed = 0;
-      const origTime = video.currentTime;
-      const origPaused = video.paused;
-      video.pause();
+      // Re-pick the live <video> each iteration. 115's player aggressively
+      // mutates the DOM and may replace the element mid-run; a stale ref
+      // gives silent no-op seeks and capture failures.
+      const v0 = pickMainVideo() || initialVideo;
+      const origTime = v0.currentTime;
+      const origPaused = v0.paused;
+
+      // Keep the decoder warm. Pausing here cold-starts the decoder and
+      // makes the first few far seeks time out (15s+ on the 115 CDN). If
+      // the video is paused, briefly play (muted to bypass autoplay) to
+      // wake the decoder; otherwise leave it alone.
+      if (v0.paused && !v0.ended) {
+        const wasMuted = v0.muted;
+        v0.muted = true;
+        const p = v0.play();
+        if (p && typeof p.then === 'function') {
+          try { await p; } catch (_) { /* autoplay blocked, ignore */ }
+        }
+        v0.muted = wasMuted;
+      }
+
+      // Freeze panel visibility while we run; the 115 player briefly
+      // swaps the <video> element during seeks, which would otherwise
+      // cause the panel to flash on/off as reportStatus() flips shouldShow.
+      state.capturing = true;
       try {
         for (let i = 0; i < total; i++) {
           if (state.cancelRequested) return { success, failed, cancelled: true };
           await waitIfHidden();
           if (state.cancelRequested) return { success, failed, cancelled: true };
           const t = times[i];
+          const video = pickMainVideo();
+          if (!video) {
+            renderFailedThumb(t);
+            failed++;
+            updateProgress(i + 1, total, t);
+            continue;
+          }
           let captured = false;
-          for (let attempt = 1; attempt <= 3 && !captured; attempt++) {
+          for (let attempt = 1; attempt <= 2 && !captured; attempt++) {
             try {
               await seekTo(video, t);
               const blob = await captureFrame(video);
@@ -642,8 +727,8 @@
               updateProgress(i + 1, total, t);
               captured = true;
             } catch (e) {
-              if (attempt < 3) {
-                await new Promise(r => setTimeout(r, 500));
+              if (attempt < 2) {
+                await new Promise(r => setTimeout(r, 200));
               } else {
                 renderFailedThumb(t);
                 failed++;
@@ -653,8 +738,15 @@
           }
         }
       } finally {
-        try { video.currentTime = origTime; } catch (_) { /* ignore */ }
-        if (!origPaused) { try { await video.play(); } catch (_) { /* ignore */ } }
+        state.capturing = false;
+        // Refresh visibility against the current DOM state (in case the
+        // <video> was permanently removed during capture).
+        reportStatus();
+        const vEnd = pickMainVideo() || v0;
+        // Pause first for a stable final seek, then restore position
+        try { vEnd.pause(); } catch (_) { /* ignore */ }
+        try { vEnd.currentTime = origTime; } catch (_) { /* ignore */ }
+        if (!origPaused) { try { await vEnd.play(); } catch (_) { /* ignore */ } }
       }
       return { success, failed, cancelled: false };
     }
