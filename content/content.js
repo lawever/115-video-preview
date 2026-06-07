@@ -504,11 +504,13 @@
         function onSeeked() {
           clearTimeout(timer);
           video.removeEventListener('seeked', onSeeked);
+          let done = false;
+          const finish = () => { if (!done) { done = true; resolve(); } };
           if ('requestVideoFrameCallback' in video) {
-            video.requestVideoFrameCallback(() => resolve());
-          } else {
-            requestAnimationFrame(() => resolve());
+            try { video.requestVideoFrameCallback(finish); } catch (_) { /* ignore */ }
           }
+          requestAnimationFrame(finish);
+          setTimeout(finish, 500);
         }
         video.addEventListener('seeked', onSeeked, { once: true });
         try { video.currentTime = t; }
