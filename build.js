@@ -51,6 +51,7 @@ async function minifyFile(src, dst) {
     mangle: true,
     format: { comments: false },
   });
+  fs.mkdirSync(path.dirname(dst), { recursive: true });
   fs.writeFileSync(dst, result.code);
   const before = code.length, after = result.code.length;
   const pct = (100 * after / before).toFixed(1);
