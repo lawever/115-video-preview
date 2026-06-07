@@ -357,10 +357,12 @@
       if (state.panelCollapsed) {
         $body.hidden = true;
         $panel.style.minHeight = '0';
+        $panel.style.height = 'auto';
         $collapse.textContent = '+';
       } else {
         $body.hidden = false;
         $panel.style.minHeight = '';
+        $panel.style.height = '';
         $collapse.textContent = '−';
       }
     }
