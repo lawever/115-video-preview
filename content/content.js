@@ -144,6 +144,7 @@
     </div>
     <div class="vp-grid" id="vp-grid"></div>
   </div>
+  <div class="vp-collapsed-icon">+</div>
 </div>
 <div class="vp-mini" id="vp-mini" hidden><button class="vp-mini-icon" id="vp-mini-icon" title="点击展开 115 视频预览" type="button">▶</button><button class="vp-mini-close" id="vp-mini-close" title="完全关闭（点工具栏图标再开）" type="button">×</button></div>
 `;
@@ -218,13 +219,44 @@
 .vp-mini-close:hover { background: #b71c1c; }
 .vp-panel {
   position: fixed; top: 20px; right: 20px;
-  width: 380px; max-width: calc(100vw - 40px); max-height: 80vh;
+  width: 380px; max-width: calc(100vw - 40px); max-height: calc(100vh - 40px);
+  min-width: 360px; min-height: 220px;
   background-color: #ffffff;
   color: #1a1a1a;
   border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.25);
   font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   pointer-events: auto; display: flex; flex-direction: column;
   overflow: hidden; z-index: 1;
+  resize: both;
+  transition: width .3s cubic-bezier(.4,0,.2,1),
+              height .3s cubic-bezier(.4,0,.2,1),
+              border-radius .3s cubic-bezier(.4,0,.2,1),
+              box-shadow .3s ease;
+}
+.vp-panel.vp-collapsed {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  border-radius: 50% !important;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0,0,0,.35) !important;
+}
+.vp-panel.vp-collapsed .vp-header,
+.vp-panel.vp-collapsed .vp-body {
+  display: none !important;
+}
+.vp-collapsed-icon {
+  display: none;
+  width: 100%; height: 100%;
+  align-items: center; justify-content: center;
+  font-size: 20px; color: #e8e8e8;
+  background: #1f1f1f;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.vp-panel.vp-collapsed .vp-collapsed-icon {
+  display: flex;
 }
 .vp-header {
   display: flex; align-items: center; gap: 8px;
@@ -274,7 +306,7 @@
 .vp-progress-bar { flex: 1; height: 6px; background: var(--vp-progress-track); border-radius: 3px; overflow: hidden; }
 .vp-progress-fill { height: 100%; width: 0%; background: var(--vp-progress-fill); transition: width .2s ease; }
 .vp-progress-text { font-size: 11px; color: var(--vp-muted); min-width: 50px; text-align: right; white-space: nowrap; }
-.vp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+.vp-grid { display: grid; grid-template-columns: repeat(auto-fill, 160px); gap: 6px; margin-top: 8px; justify-content: start; }
 .vp-thumb { display: flex; flex-direction: column; gap: 3px; }
 .vp-thumb img, .vp-thumb-failed {
   display: block; width: 100%; aspect-ratio: 16/9;
@@ -347,10 +379,10 @@
     }
     function applyCollapsed() {
       if (state.panelCollapsed) {
-        $body.hidden = true;
+        $panel.classList.add('vp-collapsed');
         $collapse.textContent = '+';
       } else {
-        $body.hidden = false;
+        $panel.classList.remove('vp-collapsed');
         $collapse.textContent = '−';
       }
     }
@@ -667,6 +699,7 @@
     $close.addEventListener('click', e => {
       e.stopPropagation();
       state.panelVisible = false;
+      clearGrid();
       applyVisibility();
       savePanelState();
     });
