@@ -356,9 +356,11 @@
     function applyCollapsed() {
       if (state.panelCollapsed) {
         $body.hidden = true;
+        $panel.style.minHeight = '0';
         $collapse.textContent = '+';
       } else {
         $body.hidden = false;
+        $panel.style.minHeight = '';
         $collapse.textContent = '−';
       }
     }
