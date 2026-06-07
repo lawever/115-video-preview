@@ -152,7 +152,7 @@
     const PANEL_CSS = `:host { all: initial; }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-:root {
+:host {
   --vp-bg: #ffffff;
   --vp-fg: #1a1a1a;
   --vp-muted: #666666;
@@ -170,7 +170,7 @@
   --vp-overlay: rgba(0, 0, 0, 0.85);
 }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :host {
     --vp-bg: #1e1e1e;
     --vp-fg: #e8e8e8;
     --vp-muted: #999999;
@@ -186,9 +186,14 @@
     --vp-progress-track: #333333;
   }
 }
+@media (prefers-color-scheme: dark) {
+  .vp-panel { background-color: #1e1e1e !important; color: #e8e8e8 !important; }
+  .vp-body { background-color: #1e1e1e !important; }
+  .vp-mini { background-color: #1e1e1e !important; color: #e8e8e8 !important; }
+}
 .vp-mini {
   position: fixed; top: 20px; right: 20px;
-  background: var(--vp-bg); color: var(--vp-fg);
+  background-color: #ffffff; color: #1a1a1a;
   border: 1px solid var(--vp-border); border-radius: 20px;
   padding: 6px 14px; font-size: 12px; cursor: pointer;
   box-shadow: 0 2px 8px rgba(0,0,0,.15);
@@ -200,7 +205,8 @@
 .vp-panel {
   position: fixed; top: 20px; right: 20px;
   width: 380px; max-width: calc(100vw - 40px); max-height: 80vh;
-  background: var(--vp-bg); color: var(--vp-fg);
+  background-color: #ffffff;
+  color: #1a1a1a;
   border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.25);
   font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
   pointer-events: auto; display: flex; flex-direction: column;
@@ -223,7 +229,7 @@
   font-family: inherit;
 }
 .vp-icon-btn:hover { background: rgba(255,255,255,.2); }
-.vp-body { padding: 10px 12px; overflow-y: auto; max-height: calc(80vh - 40px); }
+.vp-body { background-color: #ffffff; padding: 10px 12px; overflow-y: auto; max-height: calc(80vh - 40px); }
 .vp-status { font-size: 12px; color: var(--vp-muted); margin-bottom: 8px; word-break: break-all; }
 .vp-status[data-state="ok"] { color: var(--vp-success); }
 .vp-status[data-state="error"] { color: var(--vp-error); }
