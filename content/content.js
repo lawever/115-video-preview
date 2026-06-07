@@ -495,6 +495,22 @@
         }
       });
     }
+    function waitIfHidden() {
+      if (document.visibilityState !== 'hidden') return Promise.resolve();
+      setStatus('已切到其他标签页，切回此页继续…', '');
+      return new Promise(resolve => {
+        const onVis = () => {
+          if (document.visibilityState === 'visible') {
+            document.removeEventListener('visibilitychange', onVis);
+            setTimeout(() => {
+              setStatus('已切回，继续生成…', '');
+              resolve();
+            }, 300);
+          }
+        };
+        document.addEventListener('visibilitychange', onVis);
+      });
+    }
     async function runCapture(video, times) {
       const total = times.length;
       let success = 0, failed = 0;
@@ -503,6 +519,8 @@
       video.pause();
       try {
         for (let i = 0; i < total; i++) {
+          if (state.cancelRequested) return { success, failed, cancelled: true };
+          await waitIfHidden();
           if (state.cancelRequested) return { success, failed, cancelled: true };
           const t = times[i];
           try {
