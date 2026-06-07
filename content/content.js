@@ -79,7 +79,7 @@
       videoCount: 0,
       busy: false,
       cancelRequested: false,
-      settings: { count: 12, skipIntro: 0, skipOutro: 0 },
+      settings: { count: 10, skipIntro: 0, skipOutro: 0 },
       panelVisible: true,
       panelCollapsed: false,
       panelPosition: null,
@@ -131,9 +131,9 @@
   <div class="vp-body" id="vp-body">
     <div class="vp-status" id="vp-status" data-state="loading">正在检测视频…</div>
     <div class="vp-fields">
-      <label class="vp-field"><span>数量</span><input type="number" id="vp-count" min="1" step="1" value="12"></label>
-      <label class="vp-field"><span>片头（分）</span><input type="number" id="vp-skip-intro" min="0" step="0.1" value="0"></label>
-      <label class="vp-field"><span>片尾（分）</span><input type="number" id="vp-skip-outro" min="0" step="0.1" value="0"></label>
+      <label class="vp-field"><span>数量 <em id="vp-count-display">10</em></span><input type="range" id="vp-count" min="10" max="100" step="1" value="10"></label>
+      <label class="vp-field"><span>片头（分） <em id="vp-skip-intro-display">0</em></span><input type="range" id="vp-skip-intro" min="0" max="60" step="1" value="0"></label>
+      <label class="vp-field"><span>片尾（分） <em id="vp-skip-outro-display">0</em></span><input type="range" id="vp-skip-outro" min="0" max="60" step="1" value="0"></label>
     </div>
     <div class="vp-hint" id="vp-hint">预计生成 0 张预览</div>
     <button class="vp-btn-primary" id="vp-generate" disabled type="button">开始生成预览</button>
@@ -268,6 +268,43 @@
 .vp-field input::-webkit-outer-spin-button,
 .vp-field input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .vp-field input:focus { outline: 2px solid var(--vp-primary); outline-offset: -1px; }
+.vp-field input[type="range"] {
+  background: transparent; border: none; padding: 0; margin: 0;
+  width: 100%; height: 20px;
+  -webkit-appearance: none; appearance: none;
+  cursor: pointer;
+}
+.vp-field input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--vp-input-bg, #e0e0e0);
+  border-radius: 2px;
+}
+.vp-field input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px; height: 14px;
+  background: var(--vp-primary, #1976d2);
+  border-radius: 50%;
+  margin-top: -5px;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+.vp-field input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: var(--vp-input-bg, #e0e0e0);
+  border-radius: 2px;
+  border: none;
+}
+.vp-field input[type="range"]::-moz-range-thumb {
+  width: 14px; height: 14px;
+  background: var(--vp-primary, #1976d2);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+}
+.vp-field input[type="range"]:focus { outline: none; }
+.vp-field em { font-style: normal; color: var(--vp-fg, #1a1a1a); font-weight: 600; font-size: 12px; }
 .vp-hint { font-size: 12px; color: var(--vp-muted); margin: 6px 0; }
 .vp-hint[data-state="error"] { color: var(--vp-error); }
 .vp-btn-primary, .vp-btn-secondary {
@@ -319,6 +356,9 @@
     const $count      = $('vp-count');
     const $skipIntro  = $('vp-skip-intro');
     const $skipOutro  = $('vp-skip-outro');
+    const $countDisplay     = $('vp-count-display');
+    const $skipIntroDisplay = $('vp-skip-intro-display');
+    const $skipOutroDisplay = $('vp-skip-outro-display');
     const $hint       = $('vp-hint');
     const $generate   = $('vp-generate');
     const $progress   = $('vp-progress');
@@ -385,6 +425,21 @@
       $count.value     = state.settings.count;
       $skipIntro.value = state.settings.skipIntro;
       $skipOutro.value = state.settings.skipOutro;
+      updateSliderDisplay($count);
+      updateSliderDisplay($skipIntro);
+      updateSliderDisplay($skipOutro);
+    }
+    function updateSliderDisplay($el) {
+      const $d = $($el.id + '-display');
+      if ($d) $d.textContent = $el.value;
+    }
+    function updateSliderMax() {
+      const dur = state.duration;
+      if (Number.isFinite(dur) && dur > 0) {
+        const durMin = Math.max(1, Math.ceil(dur / 60));
+        if ($skipIntro.max != durMin) $skipIntro.max = durMin;
+        if ($skipOutro.max != durMin) $skipOutro.max = durMin;
+      }
     }
     function refreshValidate() {
       readSettingsFromInputs();
@@ -449,6 +504,7 @@
       const v = pickMainVideo();
       state.hasVideo = !!v;
       state.duration = (v && Number.isFinite(v.duration)) ? v.duration : 0;
+      updateSliderMax();
       state.videoCount = document.querySelectorAll('video').length;
       if (state.hasVideo) {
         const dur = formatTime(state.duration);
@@ -703,6 +759,7 @@
         readSettingsFromInputs();
         saveSettings();
         refreshValidate();
+        updateSliderDisplay($el);
       });
     });
 
