@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "115 视频预览",
+  "name": "115 Thumbnailer",
   "version": "0.3.1",
-  "description": "在 115 网盘视频页内嵌一个浮窗，按指定数量生成时间均匀分布的预览缩略图",
+  "description": "Generate evenly-spaced preview thumbnails for 115 video pages. Click any to jump.",
   "permissions": ["storage"],
   "host_permissions": [
     "*://*.115.com/*",
@@ -14,7 +14,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "115 视频预览（点击显示/隐藏浮窗）"
+    "default_title": "115 Thumbnailer (click to show/hide panel)"
   },
   "content_scripts": [{
     "matches": [
