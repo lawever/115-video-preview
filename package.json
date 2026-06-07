@@ -1,0 +1,16 @@
+{
+  "name": "115-video-preview",
+  "version": "0.3.1",
+  "private": true,
+  "description": "115 视频预览 Chrome 扩展（MV3）",
+  "scripts": {
+    "build": "node build.js",
+    "gen-key": "node gen-key.js",
+    "test": "node --test lib/utils.test.js"
+  },
+  "devDependencies": {
+    "archiver": "^7.0.1",
+    "crx": "^5.0.1",
+    "terser": "^5.24.0"
+  }
+}

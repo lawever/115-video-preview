@@ -16,3 +16,9 @@ npm-debug.log*
 # Browser extension build artifacts
 *.zip
 *.crx
+
+# Build output
+dist/
+
+# CRX signing key (private!)
+key.pem
