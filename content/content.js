@@ -144,6 +144,7 @@
     </div>
     <div class="vp-grid" id="vp-grid"></div>
   </div>
+  <div class="vp-resize-bl" id="vp-resize-bl" title="拖动调整大小"></div>
 </div>
 
 <div class="vp-mini" id="vp-mini" hidden><button class="vp-mini-icon" id="vp-mini-icon" title="点击展开 115 视频预览" type="button">▶</button><button class="vp-mini-close" id="vp-mini-close" title="完全关闭（点工具栏图标再开）" type="button">×</button></div>
@@ -217,6 +218,22 @@
 }
 .vp-mini:hover .vp-mini-close { display: flex; }
 .vp-mini-close:hover { background: #b71c1c; }
+.vp-resize-bl {
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 16px; height: 16px;
+  cursor: sw-resize;
+  z-index: 2;
+  background: transparent;
+}
+.vp-resize-bl::after {
+  content: '';
+  position: absolute;
+  left: 3px; bottom: 3px;
+  width: 8px; height: 8px;
+  border-right: 2px solid rgba(0,0,0,.28);
+  border-bottom: 2px solid rgba(0,0,0,.28);
+}
 .vp-panel {
   position: fixed; top: 20px; right: 20px;
   width: 380px; max-width: calc(100vw - 40px); max-height: calc(100vh - 40px);
@@ -350,6 +367,7 @@
 
     const $ = id => shadow.getElementById(id);
     const $panel      = $('vp-panel');
+    const $resizeBL   = $('vp-resize-bl');
     const $header     = $('vp-header');
     const $body       = $('vp-body');
     const $status     = $('vp-status');
@@ -721,6 +739,45 @@
       dragState = null;
       state.panelPosition = { left: $panel.offsetLeft, top: $panel.offsetTop };
       savePanelState();
+    });
+
+    // ============================================================
+    // 左下角 resize（自定义，浏览器原生 resize: both 只支持右下）
+    // ============================================================
+    $resizeBL.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      e.preventDefault();
+      const startX = e.clientX, startY = e.clientY;
+      const rect = $panel.getBoundingClientRect();
+      const startLeft = rect.left, startTop = rect.top;
+      const startW = rect.width, startH = rect.height;
+      $resizeBL.setPointerCapture(e.pointerId);
+      const onMove = ev => {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        let newW = Math.max(360, startW - dx);
+        let newLeft = startLeft + (startW - newW);
+        let newH = Math.max(36, startH + dy);
+        const maxLeft = window.innerWidth - newW;
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        const maxTop = window.innerHeight - newH;
+        let newTop = Math.max(0, Math.min(startTop, maxTop));
+        newH = Math.min(newH, window.innerHeight - newTop);
+        $panel.style.left = newLeft + 'px';
+        $panel.style.top = newTop + 'px';
+        $panel.style.width = newW + 'px';
+        $panel.style.height = newH + 'px';
+        $panel.style.right = 'auto';
+      };
+      const onUp = ev => {
+        try { $resizeBL.releasePointerCapture(ev.pointerId); } catch (_) {}
+        $resizeBL.removeEventListener('pointermove', onMove);
+        $resizeBL.removeEventListener('pointerup', onUp);
+        state.panelPosition = { left: $panel.offsetLeft, top: $panel.offsetTop };
+        savePanelState();
+      };
+      $resizeBL.addEventListener('pointermove', onMove);
+      $resizeBL.addEventListener('pointerup', onUp);
     });
 
     // ============================================================
