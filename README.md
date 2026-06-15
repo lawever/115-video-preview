@@ -1,4 +1,6 @@
-# 115 Thumbnailer
+🌐 **Languages:** [English](README.md) · [简体中文](README.zh-CN.md)
+
+# 115 Video Preview
 
 > Generate evenly-spaced preview thumbnails for any video on 115 cloud disk — click a thumb to jump straight to that moment.
 
@@ -11,7 +13,7 @@ Supports both the new player (`115.com/players/video/...`) and the legacy one (`
 [![CSP Safe](https://img.shields.io/badge/CSP--safe-no%20fetch%2Feval-success)](#)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](#)
 
-<img src="docs/screenshot.svg" width="900" alt="115 Thumbnailer screenshot" />
+<img src="docs/screenshot.svg" width="900" alt="115 Video Preview screenshot" />
 
 ---
 
@@ -33,7 +35,7 @@ Supports both the new player (`115.com/players/video/...`) and the legacy one (`
 2. Open `chrome://extensions/` (or `115://extensions/` in 115 Browser).
 3. Toggle **Developer mode** in the top-right.
 4. Click **Load unpacked** and pick the repository root.
-5. The toolbar gets a `115 Thumbnailer` icon.
+5. The toolbar gets a `115 Video Preview` icon.
 
 For a distributable build, see [Build & Release](#-build--release) below.
 
@@ -121,5 +123,3 @@ gen-key.js                     # generates key.pem (for signed .crx)
 MIT — see the source headers. Use it, fork it, ship it.
 
 ---
-
-🌐 **Languages:** [English](README.md) · [简体中文](README.zh-CN.md)

@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "115 Thumbnailer",
+  "name": "115 Video Preview",
   "version": "0.4.0",
   "description": "Generate evenly-spaced preview thumbnails for 115 video pages. Click any to jump.",
   "permissions": ["storage"],
@@ -14,7 +14,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "115 Thumbnailer (click to show/hide panel)"
+    "default_title": "115 Video Preview (click to show/hide panel)"
   },
   "content_scripts": [{
     "matches": [
