@@ -1,4 +1,6 @@
-# 115 Thumbnailer（115 视频预览缩略图）
+🌐 **语言：** [English](README.md) · [简体中文](README.zh-CN.md)
+
+# 115 Video Preview（115 视频预览）
 
 > 为 115 网盘视频生成均匀分布的预览缩略图 — 点击任意缩略图即可跳转到对应时间点继续播放。
 
@@ -11,7 +13,7 @@
 [![CSP 兼容](https://img.shields.io/badge/CSP--safe-%E9%9B%B6%20fetch%2Feval-success)](#)
 [![License](https://img.shields.io/badge/license-MIT-lightgrey)](#)
 
-<img src="docs/screenshot.svg" width="900" alt="115 Thumbnailer 截图" />
+<img src="docs/screenshot.svg" width="900" alt="115 Video Preview 截图" />
 
 ---
 
@@ -33,7 +35,7 @@
 2. 打开 `chrome://extensions/`（115 浏览器请用 `115://extensions/`）。
 3. 开启右上角 **开发者模式**。
 4. 点 **加载已解压的扩展程序**，选择仓库根目录。
-5. 工具栏会出现 `115 Thumbnailer` 图标。
+5. 工具栏会出现 `115 Video Preview` 图标。
 
 需要分发包请看下面的 [构建与发布](#-构建与发布)。
 
@@ -121,5 +123,3 @@ gen-key.js                     # 生成 key.pem（用于签名 crx）
 MIT — 见源码头。可任意使用、修改、再分发。
 
 ---
-
-🌐 **语言：** [English](README.md) · [简体中文](README.zh-CN.md)
